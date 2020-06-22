@@ -44,10 +44,11 @@ def handle_keys_player_turn(key) -> [Action, None]:
     elif key == tcod.event.K_d:
         action = Action(ActionType.DROP_INVENTORY_ITEM)
 
+    elif key == tcod.event.K_SPACE:
+        action = Action(ActionType.INTERACT)
+
     elif key == tcod.event.K_ESCAPE:
         action = Action(ActionType.ESCAPE)
-    elif key == tcod.event.K_SPACE:
-        action = Action(ActionType.RESTART)
 
     elif action is None:
         action = handle_movement_keys(key)

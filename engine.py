@@ -236,6 +236,14 @@ def play_game(con, player, entities, game_map, message_log, game_state, panel, c
 
                     game_state = GameStates.ENEMY_TURN
 
+                elif action_type == ActionType.INTERACT:
+                    for entity in entities:
+                        if entity.stairs and entity.x == player.x and entity.y == player.y:
+                            entities = game_map.next_floor(player, message_log, constants)
+                            fov_map = initialize_fov(game_map)
+                            tcod.console_clear(con)
+                            break
+
                 elif action_type == ActionType.DROP_INVENTORY_ITEM:
                     game_state = GameStates.DROP_INVENTORY
                 elif action_type == ActionType.ESCAPE:

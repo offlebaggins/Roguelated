@@ -13,6 +13,7 @@ class ActionType(Enum):
     EXECUTE = auto()
     NEW_GAME = auto()
     LOAD_GAME = auto()
+    INTERACT = auto()
 
 
 class Action:

@@ -6,6 +6,7 @@ from menus import inventory_menu
 
 
 class RenderOrder(Enum):
+    STAIRS = auto()
     CORPSE = auto()
     ITEM = auto()
     ACTOR = auto()
@@ -35,7 +36,7 @@ def render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, m
 
     entities_in_render_order = sorted(entities, key=lambda n: n.render_order.value)
     for entity in entities_in_render_order:
-        draw_entity(con, entity, fov_map)
+        draw_entity(con, entity, fov_map, game_map)
 
     tcod.console_set_default_foreground(con, tcod.white)
     tcod.console_print_ex(con, 1, screen_height - 2, tcod.BKGND_NONE, tcod.LEFT,
@@ -72,8 +73,9 @@ def clear_all(con, entities):
         clear_entity(con, entity)
 
 
-def draw_entity(con, entity, fov_map):
-    if tcod.map_is_in_fov(fov_map, entity.x, entity.y) or entity.render_order == RenderOrder.CORPSE:
+def draw_entity(con, entity, fov_map, game_map):
+    if tcod.map_is_in_fov(fov_map, entity.x, entity.y) or (
+            (entity.stairs or entity.item) and game_map.tiles[entity.x][entity.y].explored):
         tcod.console_set_default_foreground(con, entity.color)
         tcod.console_put_char(con, entity.x, entity.y, entity.char, tcod.BKGND_NONE)
 
