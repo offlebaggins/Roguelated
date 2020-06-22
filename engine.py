@@ -12,15 +12,16 @@ from path_functions import recompute_path
 from loader_functions.initialize_new_game import get_constants, get_game_variables
 from loader_functions.data_loaders import save_game, load_game
 from menus import main_menu, message_box
+import os
 
 
 def main():
     constants = get_constants()
 
     player = None
-    entities = None
+    entities = []
     game_map = None
-    message_log = None
+    message_log = []
     game_state = None
 
     tcod.console_set_custom_font("dejavu16x16_gs_tc.png", tcod.FONT_TYPE_GREYSCALE | tcod.FONT_LAYOUT_TCOD)
@@ -65,11 +66,10 @@ def main():
                                 show_main_menu = False
                             except FileNotFoundError:
                                 show_load_error_message = True
+                                show_main_menu = True
                         elif action_type == ActionType.ESCAPE:
-                            save_game(player, entities, game_map, message_log, game_state)
                             raise SystemExit()
                     if event.type == "QUIT":
-                        save_game(player, entities, game_map, message_log, game_state)
                         raise SystemExit()
             else:
                 play_game(root_console, player, entities, game_map, message_log, game_state, panel, constants)
