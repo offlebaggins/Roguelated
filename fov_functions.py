@@ -14,3 +14,19 @@ def initialize_fov(game_map):
 
 def recompute_fov(fov_map, x, y, radius, light_walls=True, algorithm=0):
     tcod.map_compute_fov(fov_map, x, y, radius, light_walls, algorithm)
+
+
+def recompute_walkable(fov_map, game_map, entities, walking_entity):
+    for x in range(game_map.width):
+        for y in range(game_map.height):
+            if game_map.is_blocked(x, y):
+                fov_map.walkable[y, x] = False
+            else:
+                fov_map.walkable[y, x] = True
+
+    # for entity in entities:
+    #     if walking_entity != entity and entity.blocks:
+    #         fov_map.walkable[entity.y, entity.x] = True
+
+
+

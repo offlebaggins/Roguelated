@@ -12,6 +12,7 @@ from components.item import Item
 from item_functions import heal, teleport, cast_lighting, cast_fireball, cast_explosion
 from stairs import Stairs
 from game_messages import Message
+from random_utils import random_choice_from_dict
 
 
 class GameMap:
@@ -28,6 +29,9 @@ class GameMap:
     def place_entities(self, room, entities, min_entities_per_room, max_entities_per_room, max_items_per_room):
         number_of_enemies = randint(min_entities_per_room, max_entities_per_room)
         number_of_items = randint(0, max_items_per_room)
+
+        item_chances = {'healing_potion': 70, 'lightning_scroll': 10, 'fireball_scroll': 10,
+                        'teleportation_potion': 7, 'explosion_scroll': 7}
 
         for i in range(number_of_enemies):
             # Choose location for entity
@@ -46,24 +50,24 @@ class GameMap:
             y = randint(room.y1 + 1, room.y2 - 1)
 
             if not any([entity for entity in entities if entity.x == x and entity.y == y]):
-                number = randint(0, 4)
-                if number == 0:
+                item_choice = random_choice_from_dict(item_chances)
+                if item_choice == 'healing_potion':
                     item_component = Item(use_function=heal, amount=4)
                     item = Entity(x, y, '!', tcod.light_red, 'Health Potion', render_order=RenderOrder.ITEM,
                                   item=item_component)
-                elif number == 1:
+                elif item_choice == 'lightning_scroll':
                     item_component = Item(use_function=cast_lighting, damage=20, maximum_range=5)
                     item = Entity(x, y, '!', tcod.lighter_yellow, 'Lightning Potion', render_order=RenderOrder.ITEM,
                                   item=item_component)
-                elif number == 2:
+                elif item_choice == 'teleportation_potion':
                     item_component = Item(use_function=teleport)
                     item = Entity(x, y, '!', tcod.light_blue, 'Teleportation Potion', render_order=RenderOrder.ITEM,
                                   item=item_component)
-                elif number == 3:
+                elif item_choice == 'fireball_scroll':
                     item_component = Item(use_function=cast_fireball, targeting=True, damage=10, radius=3)
-                    item = Entity(x, y, 'I', tcod.desaturated_yellow, "Fire Ball Scroll", render_order=RenderOrder.ITEM,
+                    item = Entity(x, y, 'I', tcod.desaturated_yellow, "Fireball Scroll", render_order=RenderOrder.ITEM,
                                   item=item_component)
-                elif number == 4:
+                elif item_choice == 'explosion_scroll':
                     item_component = Item(use_function=cast_explosion, targeting=True, damage=10, radius=5)
                     item = Entity(x, y, 'I', tcod.light_orange, "Explosion Scroll", render_order=RenderOrder.ITEM,
                                   item=item_component)
@@ -161,4 +165,5 @@ class GameMap:
     def is_blocked(self, x, y):
         if self.tiles[x][y].blocked:
             return True
+
         return False

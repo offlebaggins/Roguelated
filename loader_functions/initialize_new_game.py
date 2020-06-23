@@ -22,7 +22,7 @@ def get_constants():
     max_rooms = 30
 
     min_entities_per_room = 0
-    max_entities_per_room = 4
+    max_entities_per_room = 10
 
     max_items_per_room = 30
 

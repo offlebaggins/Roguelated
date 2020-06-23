@@ -38,11 +38,14 @@ def handle_keys_player_turn(key) -> [Action, None]:
     if key == tcod.event.K_g:
         action = Action(ActionType.GRAB)
 
-    elif key == tcod.event.K_TAB:
+    elif key == tcod.event.K_a:
         action = Action(ActionType.TOGGLE_INVENTORY)
 
     elif key == tcod.event.K_d:
         action = Action(ActionType.DROP_INVENTORY_ITEM)
+
+    elif key == tcod.event.K_PERIOD:
+        action = Action(ActionType.WAIT)
 
     elif key == tcod.event.K_SPACE:
         action = Action(ActionType.INTERACT)

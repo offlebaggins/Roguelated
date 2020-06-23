@@ -39,8 +39,6 @@ def render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, m
         draw_entity(con, entity, fov_map, game_map)
 
     tcod.console_set_default_foreground(con, tcod.white)
-    tcod.console_print_ex(con, 1, screen_height - 2, tcod.BKGND_NONE, tcod.LEFT,
-                          'HP: {0:02}/{1:02}'.format(player.fighter.hp, player.fighter.max_hp))
 
     tcod.console_blit(con, 0, 0, screen_width, screen_height, 0, 0, 0)
 
@@ -54,11 +52,15 @@ def render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, m
         tcod.console_print_ex(panel, message_log.x, y, tcod.BKGND_NONE, tcod.LEFT, message.text)
         y -= 1
     render_bar(panel, 1, 1, bar_width, 'HP', player.fighter.hp, player.fighter.max_hp, tcod.light_red, tcod.darker_red)
+    tcod.console_print_ex(panel, 1, 2, tcod.BKGND_NONE, tcod.LEFT,
+                          'DUNGEON LVL {0}'.format(game_map.dungeon_level))
 
     tcod.console_blit(panel, 0, 0, screen_width, panel_height, 0, 0, panel_y)
 
-    if game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY):
-        inventory_menu(con, 'INVENTORY\n', player.inventory, 50, screen_width, screen_height)
+    if game_state == GameStates.SHOW_INVENTORY:
+        inventory_menu(con, 'CHOOSE AN ITEM TO USE...\n', player.inventory, 50, screen_width, screen_height)
+    elif game_state == GameStates.DROP_INVENTORY:
+        inventory_menu(con, 'CHOOSE AN ITEM TO DROP...\n', player.inventory, 50, screen_width, screen_height)
     elif game_state == GameStates.TARGETING:
         target_x = player.fighter.target_x
         target_y = player.fighter.target_y

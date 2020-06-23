@@ -1,6 +1,9 @@
 import tcod
+import numpy as np
+import math
 
 from fov_functions import recompute_fov
+from entity import get_blocking_entities_at_location
 
 
 class BasicMonster:
@@ -11,7 +14,7 @@ class BasicMonster:
         self.stamina = max_stamina
         self.move_cost = move_cost
 
-    def take_turn(self, player, fov_map, path_map, game_map):
+    def take_turn(self, player, fov_map, game_map, entities):
         results = []
 
         if self.stamina < self.max_stamina:
@@ -21,22 +24,11 @@ class BasicMonster:
 
         if visible:
             if self.owner.distance_to(player) >= 2:
-                self.move_to(player.x, player.y, path_map)
+                if self.stamina > 0:
+                    self.owner.move_to(player, game_map, entities)
+                    self.stamina -= self.move_cost
             elif player.fighter.hp > 0:
                 attack_results = self.owner.fighter.attack(player.fighter)
                 results.extend(attack_results)
 
         return results
-
-    def move_to(self, x, y, path_map):
-
-        # Movement
-        if self.stamina >= self.move_cost:
-            astar = tcod.path.AStar(path_map)
-            path = astar.get_path(self.owner.x, self.owner.y, x, y)
-
-            if len(path) > 0:
-                self.owner.x = path[0][0]
-                self.owner.y = path[0][1]
-                self.stamina -= self.move_cost
-

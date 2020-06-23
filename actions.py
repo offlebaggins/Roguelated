@@ -4,6 +4,7 @@ from enum import auto, Enum
 class ActionType(Enum):
     ESCAPE = auto()
     MOVEMENT = auto()
+    WAIT = auto()
     GRAB = auto()
     TOGGLE_INVENTORY = auto()
     ACTIVATE_INVENTORY_ITEM = auto()
