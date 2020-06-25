@@ -2,23 +2,31 @@ import tcod
 import math
 
 from render_functions import RenderOrder
-
+from game_messages import Message
+from components.fighter import Fighter
+from components.inventory import Inventory
+from components.item import Item
+from stairs import Stairs
+from typing import List
+from path_functions import add_entities_to_path_map
 
 class Entity:
-    def __init__(self, x, y, char, color, name, blocks=False, render_order=RenderOrder.CORPSE,
-                 ai=None, fighter=None, inventory=None, item=None, stairs=None):
+    def __init__(self, x, y, char, color, name, blocks=False, render_order: RenderOrder = RenderOrder.CORPSE,
+                 ai=None, fighter: Fighter = None, inventory: Inventory = None, item: Item = None,
+                 stairs: Stairs = None, description=None):
         self.x = x
         self.y = y
         self.char = char
         self.color = color
         self.name = name
         self.blocks = blocks
-        self.render_order = render_order
+        self.render_order: RenderOrder = render_order
         self.ai = ai
-        self.fighter = fighter
-        self.inventory = inventory
-        self.item = item
-        self.stairs = stairs
+        self.fighter: Fighter = fighter
+        self.inventory: Inventory = inventory
+        self.item: Item = item
+        self.stairs: Stairs = stairs
+        self.description = description
 
         if self.ai:
             self.ai.owner = self
@@ -62,35 +70,21 @@ class Entity:
                 get_blocking_entities_at_location(entities, self.x + dx, self.y + dy)):
             self.move(dx, dy)
 
-    def move_to(self, target, game_map, entities):
-        # Create a FOV map that has the dimensions of the map
-        fov = tcod.map_new(game_map.width, game_map.height)
+    def move_to(self, target, game_map, entities, tile_map, player):
+        move_results = []
 
-        # Scan the current map each turn and set all the walls as unwalkable
-        for y1 in range(game_map.height):
-            for x1 in range(game_map.width):
-                tcod.map_set_properties(fov, x1, y1, not game_map.tiles[x1][y1].block_sight,
-                                        not game_map.tiles[x1][y1].blocked)
+        path_map = tile_map
 
-        # Scan all the objects to see if there are objects that must be navigated around
-        # Check also that the object isn't self or the target (so that the start and the end points are free)
-        for entity in entities:
-            if entity.blocks and entity != self and entity != target\
-                    and self.distance_to(entity) < 2:
-                # Set the tile as a wall so it must be navigated around
-                tcod.map_set_properties(fov, entity.x, entity.y, True, False)
+        add_entities_to_path_map(path_map, entities, self, player)
+
+        tcod.map_set_properties(path_map, self.x, self.y, True, True)
 
         # Allocate a A* path
-        my_path = tcod.path_new_using_map(fov, 1.41)
+        my_path = tcod.path_new_using_map(path_map, 1.41)
 
         # Compute the path between self's coordinates and the target's coordinates
         tcod.path_compute(my_path, self.x, self.y, target.x, target.y)
 
-        # Check if the path exists, and in this case, also the path is shorter than 25 tiles
-        # The path size matters if you want the monster to use alternative longer paths
-        # (for example through other rooms) if for example the player is in a corridor
-        # It makes sense to keep path size relatively low to keep the monsters from running around
-        # the map if there's an alternative path really far away
         if not tcod.path_is_empty(my_path) and tcod.path_size(my_path) < 25:
             # Find the next coordinates in the computed full path
             x, y = tcod.path_walk(my_path, True)
@@ -99,18 +93,44 @@ class Entity:
                 self.x = x
                 self.y = y
         else:
-            # Keep the old move function as a backup so that if there are no paths
-            # (for example another monster blocks a corridor)
-            # it will still try to move towards the player (closer to the corridor opening)
             self.move_towards(target.x, target.y, game_map, entities)
 
-            # Delete the path to free memory
+        tcod.map_set_properties(path_map, self.x, self.y, True, False)
+
         tcod.path_delete(my_path)
 
+        #Interact with landed on tile
+        move_results.extend(game_map.tiles[self.x][self.y].overlap_entity(self))
 
-def get_blocking_entities_at_location(entities, destination_x, destination_y):
+        return move_results
+
+    def get_description(self):
+        results = []
+
+        if self.description:
+            results.append({
+                'message': Message("That is a {0}. {1}".format(self.name, self.description), self.color)
+            })
+        else:
+            results.append({
+                'message': Message("That is a {0}. It is indescribable.".format(self.name), self.color)
+            })
+
+        return results
+
+
+def get_blocking_entities_at_location(entities, destination_x, destination_y) -> Entity:
     for entity in entities:
         if entity.blocks and entity.x == destination_x and entity.y == destination_y:
             return entity
 
-    return None
+    return
+
+
+def get_entities_at_location(entities, destination_x, destination_y) -> List[Entity]:
+    result = []
+    for entity in entities:
+        if entity.x == destination_x and entity.y == destination_y:
+            result.append(entity)
+
+    return result

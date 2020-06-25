@@ -18,21 +18,14 @@ def render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, m
         for y in range(game_map.height):
             for x in range(game_map.width):
                 visible = tcod.map_is_in_fov(fov_map, x, y)
-                wall = game_map.tiles[x][y].block_sight
 
                 if visible:
-                    if wall:
-                        tcod.console_set_char_background(con, x, y, colors.get('light_wall'), tcod.BKGND_SET)
-                    else:
-                        tcod.console_set_char_background(con, x, y, colors.get('light_ground'), tcod.BKGND_SET)
+                    tcod.console_set_char_background(con, x, y, game_map.tiles[x][y].light_color, tcod.BKGND_SET)
 
                     game_map.tiles[x][y].explored = True
 
                 elif game_map.tiles[x][y].explored:
-                    if wall:
-                        tcod.console_set_char_background(con, x, y, colors.get('dark_wall'), tcod.BKGND_SET)
-                    else:
-                        tcod.console_set_char_background(con, x, y, colors.get('dark_ground'), tcod.BKGND_SET)
+                    tcod.console_set_char_background(con, x, y, game_map.tiles[x][y].dark_color, tcod.BKGND_SET)
 
     entities_in_render_order = sorted(entities, key=lambda n: n.render_order.value)
     for entity in entities_in_render_order:
@@ -61,10 +54,9 @@ def render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, m
         inventory_menu(con, 'CHOOSE AN ITEM TO USE...\n', player.inventory, 50, screen_width, screen_height)
     elif game_state == GameStates.DROP_INVENTORY:
         inventory_menu(con, 'CHOOSE AN ITEM TO DROP...\n', player.inventory, 50, screen_width, screen_height)
-    elif game_state == GameStates.TARGETING:
+    elif game_state in (GameStates.TARGETING, GameStates.LOOKING):
         target_x = player.fighter.target_x
         target_y = player.fighter.target_y
-        print(target_x, target_y)
         tcod.console_set_default_foreground(con, tcod.lighter_yellow)
         tcod.console_put_char(con, target_x, target_y, 'X', tcod.BKGND_NONE)
 

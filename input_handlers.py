@@ -24,7 +24,7 @@ def handle_keys(key, game_state):
         return handle_keys_player_turn(key)
     elif game_state == GameStates.PLAYER_DEAD:
         return handle_keys_player_dead(key)
-    elif game_state == GameStates.TARGETING:
+    elif game_state in (GameStates.TARGETING, GameStates.LOOKING):
         return handle_keys_targeting(key)
     elif game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY):
         return handle_keys_show_inventory(key)
@@ -49,6 +49,9 @@ def handle_keys_player_turn(key) -> [Action, None]:
 
     elif key == tcod.event.K_SPACE:
         action = Action(ActionType.INTERACT)
+
+    elif key == tcod.event.K_e:
+        action = Action(ActionType.LOOK)
 
     elif key == tcod.event.K_ESCAPE:
         action = Action(ActionType.ESCAPE)

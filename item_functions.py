@@ -137,8 +137,7 @@ def cast_explosion(*args, **kwargs):
             dy = y - target_y
             distance = math.sqrt(dx ** 2 + dy ** 2)
             if distance < radius:
-                game_map.tiles[x][y].blocked = False
-                game_map.tiles[x][y].block_sight = False
+                game_map.tiles[x][y].hollow()
                 map_changed = True
 
     if map_changed:

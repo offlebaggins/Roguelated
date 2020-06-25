@@ -13,7 +13,7 @@ from item_functions import heal, teleport, cast_lighting, cast_fireball, cast_ex
 from stairs import Stairs
 from game_messages import Message
 from random_utils import random_choice_from_dict
-
+from tile_components.tile_types import Lava
 
 class GameMap:
     def __init__(self, width, height, dungeon_level=1):
@@ -42,7 +42,8 @@ class GameMap:
                 ai_component = BasicMonster(fov_radius=10)
                 fighter_component = Fighter(5, 0, 3)
                 monster = Entity(x, y, 'G', tcod.desaturated_green, "Goblin", blocks=True,
-                                 render_order=RenderOrder.ACTOR, ai=ai_component, fighter=fighter_component)
+                                 render_order=RenderOrder.ACTOR, ai=ai_component, fighter=fighter_component,
+                                 description="It's green and scrawny.")
                 entities.append(monster)
 
         for i in range(number_of_items):
@@ -130,6 +131,7 @@ class GameMap:
                                render_order=RenderOrder.STAIRS, stairs=stairs)
         entities.append(stairs_entity)
 
+
     def next_floor(self, player, message_log, constants):
         self.dungeon_level += 1
         entities = [player]
@@ -149,18 +151,15 @@ class GameMap:
     def create_room(self, room):
         for x in range(room.x1 + 1, room.x2):
             for y in range(room.y1 + 1, room.y2):
-                self.tiles[x][y].blocked = False
-                self.tiles[x][y].block_sight = False
+                self.tiles[x][y].hollow()
 
     def create_h_tunnel(self, x1, x2, y):
         for x in range(min(x1, x2), max(x1, x2) + 1):
-            self.tiles[x][y].blocked = False
-            self.tiles[x][y].block_sight = False
+            self.tiles[x][y].hollow()
 
     def create_v_tunnel(self, y1, y2, x):
         for y in range(min(y1, y2), max(y1, y2) + 1):
-            self.tiles[x][y].blocked = False
-            self.tiles[x][y].block_sight = False
+            self.tiles[x][y].hollow()
 
     def is_blocked(self, x, y):
         if self.tiles[x][y].blocked:

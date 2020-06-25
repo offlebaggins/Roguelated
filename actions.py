@@ -11,6 +11,7 @@ class ActionType(Enum):
     DROP_INVENTORY_ITEM = auto()
     RESTART = auto()
     TARGETING = auto()
+    LOOK = auto()
     EXECUTE = auto()
     NEW_GAME = auto()
     LOAD_GAME = auto()

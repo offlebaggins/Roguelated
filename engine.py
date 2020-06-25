@@ -2,15 +2,17 @@ import tcod
 
 from actions import Action, ActionType
 from input_handlers import handle_keys, handle_keys_main_menu
-from entity import get_blocking_entities_at_location
+from entity import get_blocking_entities_at_location, get_entities_at_location
 from render_functions import render_all, clear_all
 from fov_functions import initialize_fov, recompute_fov, recompute_walkable
+from path_functions import generate_path_map
 from game_states import GameStates
 from death_functions import kill_player, kill_entity
 from game_messages import Message
 from loader_functions.initialize_new_game import get_constants, get_game_variables
 from loader_functions.data_loaders import save_game, load_game
 from menus import main_menu, message_box
+from game_map import GameMap
 
 
 def main():
@@ -72,11 +74,11 @@ def main():
                 play_game(root_console, player, entities, game_map, message_log, game_state, panel, constants)
 
 
-def play_game(con, player, entities, game_map, message_log, game_state, panel, constants):
+def play_game(con, player, entities, game_map: GameMap, message_log, game_state, panel, constants):
     while True:
         fov_algorithm = 2
         fov_light_walls = True
-        fov_radius = 10
+        fov_radius = 20
         fov_recompute = True
         fov_map = initialize_fov(game_map)
 
@@ -98,11 +100,13 @@ def play_game(con, player, entities, game_map, message_log, game_state, panel, c
         # Handle Game State
         if game_state == GameStates.ENEMY_TURN:
 
+            #Generate path map with all static tiles (ignore entities for now)
+            path_map = generate_path_map(game_map, entities=None, player=player)
+
             for entity in entities:
                 if entity.ai:
                     recompute_walkable(fov_map, game_map, entities, entity)
-                    # fov_map.walkable[entity.y, entity.x] = True
-                    entity_turn_results = entity.ai.take_turn(player, fov_map, game_map, entities)
+                    entity_turn_results = entity.ai.take_turn(player, fov_map, game_map, entities, path_map)
 
                     for entity_turn_result in entity_turn_results:
                         message = entity_turn_result.get('message')
@@ -155,6 +159,33 @@ def play_game(con, player, entities, game_map, message_log, game_state, panel, c
                                                                 target_x=target_x, target_y=target_y)
                         player_turn_results.extend(item_use_results)
                         game_state = GameStates.ENEMY_TURN
+                    elif game_state == GameStates.LOOKING:
+                        look_results = []
+
+                        target_x = player.fighter.target_x
+                        target_y = player.fighter.target_y
+
+                        looked_at_entities = get_entities_at_location(entities, target_x, target_y)
+                        if tcod.map_is_in_fov(fov_map, target_x, target_y):
+                            if looked_at_entities:
+                                for entity in looked_at_entities:
+                                    look_results.extend(entity.get_description())
+                            else:
+                                if game_map.tiles[target_x][target_y].blocked:
+                                    look_results.append({
+                                        'message': Message("You stare at the wall.")
+                                    })
+                                else:
+                                    look_results.append({
+                                        'message': Message("You stare into empty space.")
+                                    })
+                        else:
+                            look_results.append({
+                                'message': Message("You can't see that far.")
+                            })
+
+                        game_state = GameStates.PLAYER_TURN
+                        player_turn_results.extend(look_results)
 
                 if action_type == ActionType.MOVEMENT:
                     dx: int = action.kwargs.get("dx", 0)
@@ -164,6 +195,10 @@ def play_game(con, player, entities, game_map, message_log, game_state, panel, c
                     if game_state == GameStates.PLAYER_TURN:
                         destination_x = player.x + dx
                         destination_y = player.y + dy
+
+                        tile_results = game_map.tiles[destination_x][destination_y].overlap_entity(player)
+                        player_turn_results.extend(tile_results)
+
                         if not game_map.is_blocked(destination_x, destination_y):
                             target = get_blocking_entities_at_location(entities, destination_x, destination_y)
 
@@ -180,7 +215,7 @@ def play_game(con, player, entities, game_map, message_log, game_state, panel, c
                         game_state = GameStates.ENEMY_TURN
 
                     # Targeting
-                    elif game_state == GameStates.TARGETING:
+                    elif game_state in (GameStates.TARGETING, GameStates.LOOKING):
                         player.fighter.target_x += dx
                         player.fighter.target_y += dy
 
@@ -194,6 +229,10 @@ def play_game(con, player, entities, game_map, message_log, game_state, panel, c
                         player_turn_results.append({'message': Message('You grab at the air', tcod.yellow)})
 
                     game_state = GameStates.ENEMY_TURN
+
+                elif action_type == ActionType.LOOK:
+                    game_state = GameStates.LOOKING
+                    player.fighter.target_x, player.fighter.target_y = player.x, player.y
 
                 elif action_type == ActionType.WAIT:
                     player_turn_results.append({'message': Message('You stare blankly into space', tcod.yellow)})
@@ -279,10 +318,6 @@ def play_game(con, player, entities, game_map, message_log, game_state, panel, c
                 player.fighter.target_y = player.y
 
                 message_log.add_message(Message("You begin aiming the {0}.".format(targeting.name)))
-
-            if map_changed:
-                fov_map = initialize_fov(game_map)
-
 
 if __name__ == "__main__":
     main()
