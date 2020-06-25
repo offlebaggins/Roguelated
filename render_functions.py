@@ -69,7 +69,7 @@ def clear_all(con, entities):
 
 def draw_entity(con, entity, fov_map, game_map):
     if tcod.map_is_in_fov(fov_map, entity.x, entity.y) or (
-            (entity.stairs or entity.item) and game_map.tiles[entity.x][entity.y].explored):
+            (entity.structure or entity.item) and game_map.tiles[entity.x][entity.y].explored):
         tcod.console_set_default_foreground(con, entity.color)
         tcod.console_put_char(con, entity.x, entity.y, entity.char, tcod.BKGND_NONE)
 

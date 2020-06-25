@@ -11,9 +11,9 @@ from render_functions import RenderOrder
 from components.item import Item
 from item_functions import heal, teleport, cast_lighting, cast_fireball, cast_explosion
 from stairs import Stairs
-from game_messages import Message
 from random_utils import random_choice_from_dict
-from tile_components.tile_types import Lava
+from components.door import Door
+
 
 class GameMap:
     def __init__(self, width, height, dungeon_level=1):
@@ -113,13 +113,12 @@ class GameMap:
 
                     if randint(0, 1) == 1:
                         # first move horizontally, then vertically
-                        self.create_h_tunnel(prev_x, new_x, prev_y)
+                        self.create_h_tunnel(prev_x, new_x, prev_y, entities)
                         self.create_v_tunnel(prev_y, new_y, new_x)
                     else:
                         # first move vertically, then horizontally
                         self.create_v_tunnel(prev_y, new_y, prev_x)
-                        self.create_h_tunnel(prev_x, new_x, new_y)
-
+                        self.create_h_tunnel(prev_x, new_x, new_y, entities)
                 rooms.append(new_room)
 
                 self.place_entities(new_room, entities, min_entities_per_room, max_entities_per_room,
@@ -128,11 +127,16 @@ class GameMap:
 
         stairs = Stairs(self.dungeon_level + 1)
         stairs_entity = Entity(last_room_center_x, last_room_center_y, '>', tcod.white, 'Stairs',
-                               render_order=RenderOrder.STAIRS, stairs=stairs)
+                               render_order=RenderOrder.STAIRS, structure=stairs)
         entities.append(stairs_entity)
 
+    def place_door(self, x, y, entities):
+        door = Door(is_open=False)
+        door_entity = Entity(x, y, '+', tcod.darker_orange, 'Door',
+                             render_order=RenderOrder.STAIRS, structure=door)
+        entities.append(door_entity)
 
-    def next_floor(self, player, message_log, constants):
+    def next_floor(self, player, constants):
         self.dungeon_level += 1
         entities = [player]
 
@@ -144,8 +148,6 @@ class GameMap:
 
         player.fighter.heal(player.fighter.max_hp // 2)
 
-        message_log.add_message(Message('You take a moment to rest, and recover your strength.', tcod.light_violet))
-
         return entities
 
     def create_room(self, room):
@@ -153,7 +155,9 @@ class GameMap:
             for y in range(room.y1 + 1, room.y2):
                 self.tiles[x][y].hollow()
 
-    def create_h_tunnel(self, x1, x2, y):
+    def create_h_tunnel(self, x1, x2, y, entities):
+        self.place_door(x1, y, entities)
+        self.place_door(x2, y, entities)
         for x in range(min(x1, x2), max(x1, x2) + 1):
             self.tiles[x][y].hollow()
 

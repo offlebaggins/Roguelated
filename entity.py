@@ -6,14 +6,14 @@ from game_messages import Message
 from components.fighter import Fighter
 from components.inventory import Inventory
 from components.item import Item
-from stairs import Stairs
+from components.structure import Structure
 from typing import List
 from path_functions import add_entities_to_path_map
 
 class Entity:
     def __init__(self, x, y, char, color, name, blocks=False, render_order: RenderOrder = RenderOrder.CORPSE,
                  ai=None, fighter: Fighter = None, inventory: Inventory = None, item: Item = None,
-                 stairs: Stairs = None, description=None):
+                 structure: Structure = None, description=None):
         self.x = x
         self.y = y
         self.char = char
@@ -25,7 +25,7 @@ class Entity:
         self.fighter: Fighter = fighter
         self.inventory: Inventory = inventory
         self.item: Item = item
-        self.stairs: Stairs = stairs
+        self.structure: Structure = structure
         self.description = description
 
         if self.ai:
@@ -40,8 +40,8 @@ class Entity:
         if self.item:
             self.item.owner = self
 
-        if self.stairs:
-            self.stairs.owner = self
+        if self.structure:
+            self.structure.initialize(self)
 
     def move(self, dx, dy):
         # Move the entity by the given amount
@@ -109,11 +109,11 @@ class Entity:
 
         if self.description:
             results.append({
-                'message': Message("That is a {0}. {1}".format(self.name, self.description), self.color)
+                'message': Message("You examine the {0}. {1}".format(self.name, self.description), self.color)
             })
         else:
             results.append({
-                'message': Message("That is a {0}. It is indescribable.".format(self.name), self.color)
+                'message': Message("You examine the {0}. It is indescribable.".format(self.name), self.color)
             })
 
         return results
@@ -134,3 +134,5 @@ def get_entities_at_location(entities, destination_x, destination_y) -> List[Ent
             result.append(entity)
 
     return result
+
+

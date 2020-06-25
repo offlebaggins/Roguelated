@@ -19,10 +19,9 @@ def generate_path_map(game_map, entities, player):
     return path_map
 
 
-def add_entities_to_path_map(path_map, entities, entity, player):
+def add_entities_to_path_map(path_map, entities, self_entity, player):
     for entity in entities:
-
-        if entity.distance_to(player) < 2 and entity.blocks and entity != player:
+        if self_entity.distance_to(entity) < 2 and entity.blocks and entity != player:
             tcod.map_set_properties(path_map, entity.x, entity.y, True, False)
 
     return path_map

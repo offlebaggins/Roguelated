@@ -203,8 +203,12 @@ def play_game(con, player, entities, game_map: GameMap, message_log, game_state,
                             target = get_blocking_entities_at_location(entities, destination_x, destination_y)
 
                             if target:
-                                attack_results = player.fighter.attack(target.fighter)
-                                player_turn_results.extend(attack_results)
+                                if target.fighter:
+                                    attack_results = player.fighter.attack(target.fighter)
+                                    player_turn_results.extend(attack_results)
+                                elif target.structure:
+                                    structure_interact_results = target.structure.interact(player)
+                                    player_turn_results.extend(structure_interact_results)
                             else:
                                 player.move(dx, dy)
 
@@ -265,10 +269,9 @@ def play_game(con, player, entities, game_map: GameMap, message_log, game_state,
 
                 elif action_type == ActionType.INTERACT:
                     for entity in entities:
-                        if entity.stairs and entity.x == player.x and entity.y == player.y:
-                            entities = game_map.next_floor(player, message_log, constants)
-                            fov_map = initialize_fov(game_map)
-                            tcod.console_clear(con)
+                        if entity.structure and entity.x == player.x and entity.y == player.y:
+                            interact_results = entity.structure.interact(player)
+                            player_turn_results.extend(interact_results)
                             break
 
                 elif action_type == ActionType.DROP_INVENTORY_ITEM:
@@ -290,7 +293,7 @@ def play_game(con, player, entities, game_map: GameMap, message_log, game_state,
             item_consumed = player_turn_result.get('consumed')
             item_dropped = player_turn_result.get('item_dropped')
             targeting = player_turn_result.get('targeting')
-            map_changed = player_turn_result.get('map_changed')
+            next_floor = player_turn_result.get('next_floor')
 
             if message:
                 message_log.add_message(message)
@@ -318,6 +321,11 @@ def play_game(con, player, entities, game_map: GameMap, message_log, game_state,
                 player.fighter.target_y = player.y
 
                 message_log.add_message(Message("You begin aiming the {0}.".format(targeting.name)))
+
+            if next_floor:
+                entities = game_map.next_floor(player, constants)
+                fov_map = initialize_fov(game_map)
+                tcod.console_clear(con)
 
 if __name__ == "__main__":
     main()
