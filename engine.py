@@ -59,7 +59,8 @@ def main():
                             show_load_error_message = False
 
                             if action_type == ActionType.NEW_GAME:
-                                player, entities, animator, game_map, message_log, game_state = get_game_variables(constants)
+                                player, entities, animator, game_map, message_log, game_state = get_game_variables(
+                                    constants)
                                 show_main_menu = False
                             elif action_type == ActionType.LOAD_GAME:
                                 try:
@@ -202,8 +203,15 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
 
                             if target:
                                 if target.fighter:
-                                    attack_results = player.fighter.attack(target.fighter)
-                                    player_turn_results.extend(attack_results)
+                                    player_fighter = player.body.selected_appendage.fighter
+                                    if player_fighter:
+                                        attack_results = player_fighter.attack(target.fighter)
+                                        player_turn_results.extend(attack_results)
+                                    else:
+                                        player_turn_results.append({
+                                            'message': Message("You cannot attack with your {0}.".format(
+                                                player.body.selected_appendage.name), tcod.yellow)
+                                        })
                                 elif target.structure:
                                     structure_interact_results = target.structure.interact(player)
                                     player_turn_results.extend(structure_interact_results)
@@ -252,22 +260,31 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
                         clear_all(con, entities)
                         game_state = GameStates.SHOW_INVENTORY
 
-                elif action_type == ActionType.ACTIVATE_INVENTORY_ITEM:
-                    item_index = action.kwargs.get("item_index", None)
+                elif action_type == ActionType.CHOOSE_OPTION:
+                    option_index = action.kwargs.get("option_index", None)
                     item = None
-                    if item_index < len(player.inventory.items):
-                        item = player.inventory.items[item_index]
+                    if option_index < len(player.inventory.items):
+                        item = player.inventory.items[option_index]
                         # if item:
                     if game_state == GameStates.SHOW_INVENTORY:
                         activate_item_results = player.inventory.use(item, fov_map=fov_map,
                                                                      game_map=game_map,
                                                                      entities=entities)
                         player_turn_results.extend(activate_item_results)
+                        game_state = GameStates.ENEMY_TURN
+
+
                     elif game_state == GameStates.DROP_INVENTORY:
                         drop_item_results = player.inventory.drop_item(item)
                         player_turn_results.extend(drop_item_results)
+                        game_state = GameStates.ENEMY_TURN
 
-                    game_state = GameStates.ENEMY_TURN
+
+                    elif game_state == GameStates.SWAP_APPENDAGE:
+                        swap_results = player.body.select_appendage(player.body.appendages[option_index])
+                        player_turn_results.extend(swap_results)
+                        game_state = GameStates.PLAYER_TURN
+
 
                 elif action_type == ActionType.INTERACT:
                     for entity in entities:
@@ -278,6 +295,10 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
 
                 elif action_type == ActionType.DROP_INVENTORY_ITEM:
                     game_state = GameStates.DROP_INVENTORY
+
+                elif action_type == ActionType.SWAP_APPENDAGE:
+                    game_state = GameStates.SWAP_APPENDAGE
+
                 elif action_type == ActionType.ESCAPE:
                     if game_state == GameStates.TARGETING:
                         game_state = GameStates.PLAYER_TURN

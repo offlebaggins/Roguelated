@@ -2,7 +2,7 @@ import tcod
 
 from enum import Enum, auto
 from game_states import GameStates
-from menus import inventory_menu
+from menus import inventory_menu, appendage_menu
 
 
 class RenderOrder(Enum):
@@ -14,7 +14,8 @@ class RenderOrder(Enum):
     ACTOR = auto()
 
 
-def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_recompute, message_log, screen_width, screen_height,
+def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_recompute, message_log, screen_width,
+               screen_height,
                bar_width, panel_height, panel_y, colors, game_state):
     if fov_recompute:
         for y in range(game_map.height):
@@ -55,7 +56,16 @@ def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_re
         y -= 1
     render_bar(panel, 1, 1, bar_width, 'HP', player.fighter.hp, player.fighter.max_hp, tcod.light_red, tcod.darker_red)
     tcod.console_print_ex(panel, 1, 2, tcod.BKGND_NONE, tcod.LEFT,
-                          'DUNGEON LVL {0}'.format(game_map.dungeon_level))
+                          'LVL {0}'.format(game_map.dungeon_level))
+
+    # hand_x = 1 + bar_width
+    # tcod.console_print_ex(panel, hand_x, 0, tcod.BKGND_NONE, tcod.LEFT, "########")
+    # tcod.console_print_ex(panel, hand_x, 1, tcod.BKGND_NONE, tcod.LEFT, "#||||| # |||||")
+    # tcod.console_print_ex(panel, hand_x, 2, tcod.BKGND_NONE, tcod.LEFT, "#||||| # |||||")
+    # tcod.console_print_ex(panel, hand_x, 3, tcod.BKGND_NONE, tcod.LEFT, "#|||||\#/|||||")
+    # tcod.console_print_ex(panel, hand_x, 4, tcod.BKGND_NONE, tcod.LEFT, "#|    |#|    |")
+    # tcod.console_print_ex(panel, hand_x, 5, tcod.BKGND_NONE, tcod.LEFT, "#\____/#\____/")
+    # tcod.console_print_ex(panel, hand_x, 6, tcod.BKGND_NONE, tcod.LEFT, "########")
 
     tcod.console_blit(panel, 0, 0, screen_width, panel_height, 0, 0, panel_y)
 
@@ -64,14 +74,14 @@ def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_re
 
     elif game_state == GameStates.DROP_INVENTORY:
         inventory_menu(con, 'CHOOSE AN ITEM TO DROP...\n', player.inventory, 50, screen_width, screen_height)
+    elif game_state == GameStates.SWAP_APPENDAGE:
+        appendage_menu(con, "CHOOSE AN APPENDAGE TO SWAP TO...\n", player, screen_width, screen_height)
 
     elif game_state in (GameStates.TARGETING, GameStates.LOOKING):
         target_x = player.fighter.target_x
         target_y = player.fighter.target_y
         tcod.console_set_default_foreground(con, tcod.lighter_yellow)
         tcod.console_put_char(con, target_x, target_y, 'X', tcod.BKGND_NONE)
-
-
 
 
 def clear_all(con, entities):

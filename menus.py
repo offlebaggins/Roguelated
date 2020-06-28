@@ -46,10 +46,21 @@ def inventory_menu(con, header, inventory, inventory_width, screen_width, screen
     menu(con, header, options, inventory_width, screen_width, screen_height, option_colors)
 
 
-def main_menu(con, screen_width, screen_height):
+def appendage_menu(con, header, entity, screen_width, screen_height):
+    appendages = []
+    for appendage in entity.body.appendages:
+        if appendage.grabs:
+            appendages.append(appendage.name)
 
-    tcod.console_print_ex(0, int(screen_width / 2), int(screen_height/2)-10, tcod.BKGND_NONE, tcod.CENTER,
-                             'ROGUESIMILAR')
+    if len(appendages) == 0:
+        appendages = ["The {0} has no appendages".format(entity.name)]
+
+    menu(con, header, appendages, 50, screen_width, screen_height)
+
+
+def main_menu(con, screen_width, screen_height):
+    tcod.console_print_ex(0, int(screen_width / 2), int(screen_height / 2) - 10, tcod.BKGND_NONE, tcod.CENTER,
+                          'ROGUESIMILAR')
 
     menu(con, '', ['NEW GAME', 'CONTINUE', 'QUIT'], 24, screen_width, screen_height)
 

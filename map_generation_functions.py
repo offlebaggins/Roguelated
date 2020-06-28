@@ -204,7 +204,8 @@ def place_entities(room, entities, min_entities_per_room, max_entities_per_room,
                 item = Entity(x, y, 'I', tcod.desaturated_yellow, "Fireball Scroll", render_order=RenderOrder.ITEM,
                               item=item_component)
             elif item_choice == 'explosion_scroll':
-                item_component = Item(use_function=cast_explosion, targeting=True, damage=10, radius=5)
+                item_component = Item(use_function=cast_explosion, targeting=True, damage=10, radius=5,
+                                      targeting_radius=6)
                 item = Entity(x, y, 'I', tcod.light_orange, "Explosion Scroll", render_order=RenderOrder.ITEM,
                               item=item_component)
 

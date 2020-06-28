@@ -9,10 +9,12 @@ from components.item import Item
 from components.structure import Structure
 from typing import List
 from path_functions import add_entities_to_path_map
+from bodies import Body, get_human_body
+
 
 class Entity:
     def __init__(self, x, y, char, color, name, blocks=False, render_order: RenderOrder = RenderOrder.CORPSE,
-                 ai=None, fighter: Fighter = None, inventory: Inventory = None, item: Item = None,
+                 ai=None, body: Body = None, fighter: Fighter = None, inventory: Inventory = None, item: Item = None,
                  structure: Structure = None, description=None, block_sight=False):
         self.x = x
         self.y = y
@@ -22,6 +24,7 @@ class Entity:
         self.blocks = blocks
         self.render_order: RenderOrder = render_order
         self.ai = ai
+        self.body: Body = body
         self.fighter: Fighter = fighter
         self.inventory: Inventory = inventory
         self.item: Item = item
@@ -42,6 +45,9 @@ class Entity:
 
         if self.structure:
             self.structure.initialize(self)
+
+        if self.body:
+            self.body.owner = self
 
     def move(self, dx, dy):
         # Move the entity by the given amount
@@ -99,7 +105,7 @@ class Entity:
 
         tcod.path_delete(my_path)
 
-        #Interact with landed on tile
+        # Interact with landed on tile
         move_results.extend(game_map.tiles[self.x][self.y].overlap_entity(self))
 
         return move_results
@@ -134,5 +140,3 @@ def get_entities_at_location(entities, destination_x, destination_y) -> List[Ent
             result.append(entity)
 
     return result
-
-

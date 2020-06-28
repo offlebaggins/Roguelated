@@ -7,7 +7,7 @@ class ActionType(Enum):
     WAIT = auto()
     GRAB = auto()
     TOGGLE_INVENTORY = auto()
-    ACTIVATE_INVENTORY_ITEM = auto()
+    CHOOSE_OPTION = auto()
     DROP_INVENTORY_ITEM = auto()
     RESTART = auto()
     TARGETING = auto()
@@ -16,6 +16,7 @@ class ActionType(Enum):
     NEW_GAME = auto()
     LOAD_GAME = auto()
     INTERACT = auto()
+    SWAP_APPENDAGE = auto()
 
 
 class Action:

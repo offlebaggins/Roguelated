@@ -26,8 +26,8 @@ def handle_keys(key, game_state):
         return handle_keys_player_dead(key)
     elif game_state in (GameStates.TARGETING, GameStates.LOOKING):
         return handle_keys_targeting(key)
-    elif game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY):
-        return handle_keys_show_inventory(key)
+    elif game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY, GameStates.SWAP_APPENDAGE):
+        return handle_keys_choose_option(key)
     return action
 
 
@@ -56,6 +56,9 @@ def handle_keys_player_turn(key) -> [Action, None]:
     elif key == tcod.event.K_ESCAPE:
         action = Action(ActionType.ESCAPE)
 
+    elif key == tcod.event.K_r:
+        action = Action(ActionType.SWAP_APPENDAGE)
+
     elif action is None:
         action = handle_movement_keys(key)
 
@@ -70,12 +73,12 @@ def handle_keys_player_dead(key):
     return Action(ActionType.RESTART)
 
 
-def handle_keys_show_inventory(key):
+def handle_keys_choose_option(key):
     action: [Action, None] = None
 
     index = key - 97
     if index >= 0:
-        return Action(ActionType.ACTIVATE_INVENTORY_ITEM, item_index=index)
+        return Action(ActionType.CHOOSE_OPTION, option_index=index)
 
     elif key == tcod.event.K_TAB or key == tcod.event.K_ESCAPE:
         return Action(ActionType.TOGGLE_INVENTORY)

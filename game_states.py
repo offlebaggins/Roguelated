@@ -9,3 +9,4 @@ class GameStates(Enum):
     DROP_INVENTORY = auto()
     TARGETING = auto()
     LOOKING = auto()
+    SWAP_APPENDAGE = auto()
