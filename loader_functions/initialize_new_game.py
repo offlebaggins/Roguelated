@@ -7,6 +7,7 @@ from render_functions import RenderOrder
 from game_map import GameMap
 from game_messages import MessageLog
 from game_states import GameStates
+from animation import Animator
 
 def get_constants():
     window_title = "Roguesimilar"
@@ -74,6 +75,8 @@ def get_game_variables(constants):
 
     entities = [player]
 
+    animator = Animator([])
+
     game_map = GameMap(constants['map_width'], constants['map_height'])
     game_map.make_map(constants['max_rooms'], constants['room_min_size'], constants['room_max_size'],
                       constants['map_width'], constants['map_height'], player, entities,
@@ -84,4 +87,4 @@ def get_game_variables(constants):
 
     game_state = GameStates.PLAYER_TURN
 
-    return player, entities, game_map, message_log, game_state
+    return player, entities, animator, game_map, message_log, game_state

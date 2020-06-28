@@ -27,6 +27,3 @@ def recompute_walkable(fov_map, game_map, entities, walking_entity):
     # for entity in entities:
     #     if walking_entity != entity and entity.blocks:
     #         fov_map.walkable[entity.y, entity.x] = True
-
-
-

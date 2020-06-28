@@ -13,6 +13,7 @@ from loader_functions.initialize_new_game import get_constants, get_game_variabl
 from loader_functions.data_loaders import save_game, load_game
 from menus import main_menu, message_box
 from game_map import GameMap
+from animation import Animator, add_explosion_animation
 
 
 def main():
@@ -23,6 +24,7 @@ def main():
     game_map = None
     message_log = []
     game_state = None
+    animator = None
 
     tcod.console_set_custom_font("dejavu16x16_gs_tc.png", tcod.FONT_TYPE_GREYSCALE | tcod.FONT_LAYOUT_TCOD)
 
@@ -57,11 +59,11 @@ def main():
                             show_load_error_message = False
 
                             if action_type == ActionType.NEW_GAME:
-                                player, entities, game_map, message_log, game_state = get_game_variables(constants)
+                                player, entities, animator, game_map, message_log, game_state = get_game_variables(constants)
                                 show_main_menu = False
                             elif action_type == ActionType.LOAD_GAME:
                                 try:
-                                    player, entities, game_map, message_log, game_state = load_game()
+                                    player, entities, animator, game_map, message_log, game_state = load_game()
                                     show_main_menu = False
                                 except FileNotFoundError:
                                     show_load_error_message = True
@@ -71,10 +73,10 @@ def main():
                     if event.type == "QUIT":
                         raise SystemExit()
             else:
-                play_game(root_console, player, entities, game_map, message_log, game_state, panel, constants)
+                play_game(root_console, player, entities, animator, game_map, message_log, game_state, panel, constants)
 
 
-def play_game(con, player, entities, game_map: GameMap, message_log, game_state, panel, constants):
+def play_game(con, player, entities, animator: Animator, game_map: GameMap, message_log, game_state, panel, constants):
     while True:
         fov_algorithm = 2
         fov_light_walls = True
@@ -85,11 +87,9 @@ def play_game(con, player, entities, game_map: GameMap, message_log, game_state,
         if fov_recompute:
             recompute_fov(fov_map, player.x, player.y, fov_radius, fov_light_walls, fov_algorithm)
 
-        render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, message_log,
+        render_all(con, panel, entities, animator, player, game_map, fov_map, fov_recompute, message_log,
                    constants['screen_width'], constants['screen_height'], constants['bar_width'],
                    constants['panel_height'], constants['panel_y'], constants['colors'], game_state)
-
-        fov_recompute = True  # False
 
         tcod.console_flush()
 
@@ -97,10 +97,12 @@ def play_game(con, player, entities, game_map: GameMap, message_log, game_state,
 
         player_turn_results = []
 
+        animator.advance_frame()
+
         # Handle Game State
         if game_state == GameStates.ENEMY_TURN:
 
-            #Generate path map with all static tiles (ignore entities for now)
+            # Generate path map with all static tiles (ignore entities for now)
             path_map = generate_path_map(game_map, entities=None, player=player)
 
             for entity in entities:
@@ -134,7 +136,7 @@ def play_game(con, player, entities, game_map: GameMap, message_log, game_state,
         # Handle Events
         for event in tcod.event.wait():
             if event.type == "QUIT":
-                save_game(player, entities, game_map, message_log, game_state)
+                save_game(player, entities, animator, game_map, message_log, game_state)
                 raise SystemExit()
 
             if event.type == "KEYDOWN":
@@ -145,11 +147,7 @@ def play_game(con, player, entities, game_map: GameMap, message_log, game_state,
 
                 action_type: ActionType = action.action_type
 
-                if action_type == ActionType.ESCAPE:
-                    if game_state == GameStates.TARGETING:
-                        game_state = GameStates.PLAYER_TURN
-
-                elif action_type == ActionType.EXECUTE:
+                if action_type == ActionType.EXECUTE:
                     if game_state == GameStates.TARGETING:
                         targeting_item = player.fighter.targeting_item
                         target_x = player.fighter.target_x
@@ -220,8 +218,11 @@ def play_game(con, player, entities, game_map: GameMap, message_log, game_state,
 
                     # Targeting
                     elif game_state in (GameStates.TARGETING, GameStates.LOOKING):
-                        player.fighter.target_x += dx
-                        player.fighter.target_y += dy
+                        new_x = player.fighter.target_x + dx
+                        new_y = player.fighter.target_y + dy
+                        if player.distance(new_x, new_y) < player.fighter.targeting_radius:
+                            player.fighter.target_x = new_x
+                            player.fighter.target_y = new_y
 
                 elif action_type == ActionType.GRAB:
                     for entity in entities:
@@ -237,6 +238,7 @@ def play_game(con, player, entities, game_map: GameMap, message_log, game_state,
                 elif action_type == ActionType.LOOK:
                     game_state = GameStates.LOOKING
                     player.fighter.target_x, player.fighter.target_y = player.x, player.y
+                    player.fighter.targeting_radius = 100
 
                 elif action_type == ActionType.WAIT:
                     player_turn_results.append({'message': Message('You stare blankly into space', tcod.yellow)})
@@ -279,8 +281,8 @@ def play_game(con, player, entities, game_map: GameMap, message_log, game_state,
                 elif action_type == ActionType.ESCAPE:
                     if game_state == GameStates.TARGETING:
                         game_state = GameStates.PLAYER_TURN
-                    else:
-                        save_game(player, entities, game_map, message_log, game_state)
+                    elif game_state == GameStates.PLAYER_TURN:
+                        save_game(player, entities, animator, game_map, message_log, game_state)
                         main()
                 elif action_type == ActionType.RESTART:
                     main()
@@ -317,6 +319,7 @@ def play_game(con, player, entities, game_map: GameMap, message_log, game_state,
                 game_state = GameStates.TARGETING
 
                 player.fighter.targeting_item = targeting
+                player.fighter.targeting_radius = targeting.item.targeting_radius
                 player.fighter.target_x = player.x
                 player.fighter.target_y = player.y
 
@@ -326,6 +329,7 @@ def play_game(con, player, entities, game_map: GameMap, message_log, game_state,
                 entities = game_map.next_floor(player, constants)
                 fov_map = initialize_fov(game_map)
                 tcod.console_clear(con)
+
 
 if __name__ == "__main__":
     main()

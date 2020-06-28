@@ -3,4 +3,5 @@ class Item:
         self.use_function = use_function
         self.function_kwargs = kwargs
         self.targeting = targeting
+        self.targeting_radius = 2
         self.targeting_message = targeting_message

@@ -13,7 +13,7 @@ from path_functions import add_entities_to_path_map
 class Entity:
     def __init__(self, x, y, char, color, name, blocks=False, render_order: RenderOrder = RenderOrder.CORPSE,
                  ai=None, fighter: Fighter = None, inventory: Inventory = None, item: Item = None,
-                 structure: Structure = None, description=None):
+                 structure: Structure = None, description=None, block_sight=False):
         self.x = x
         self.y = y
         self.char = char

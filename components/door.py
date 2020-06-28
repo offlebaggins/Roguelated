@@ -1,6 +1,7 @@
 from components.structure import Structure
 from entity import Entity
 from game_messages import Message
+from render_functions import RenderOrder
 
 
 class Door(Structure):
@@ -11,19 +12,21 @@ class Door(Structure):
     def initialize(self, owner):
         self.owner = owner
         self.set_open(False)
+        self.owner.block_sight = True
+        self.owner.render_order = RenderOrder.CLOSED_DOOR
 
     def interact(self, entity):
         interact_results = []
 
         if self.open:
             self.set_open(False)
-            verb = "closes"
+            verb = "close"
         else:
             self.set_open(True)
-            verb = "opens"
+            verb = "open"
 
         interact_results.append({
-            'message': Message("The {0} {1} the door.".format(entity.name, verb))
+            'message': Message("The {0} {1}s the door.".format(entity.name, verb))
         })
         return interact_results
 
@@ -33,10 +36,12 @@ class Door(Structure):
             self.owner.description = "It is open"
             self.owner.blocks = False
             self.owner.char = '_'
+            self.owner.render_order = RenderOrder.OPEN_DOOR
         else:
             self.open = False
             self.owner.description = "It is closed"
             self.owner.blocks = True
             self.owner.char = '+'
+            self.owner.render_order = RenderOrder.CLOSED_DOOR
 
 

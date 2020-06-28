@@ -30,7 +30,7 @@ class Tile:
 
         self.name = name
 
-        self.explored = False
+        self.explored = True # False
 
         self.description = description
 

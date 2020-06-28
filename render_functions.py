@@ -7,12 +7,14 @@ from menus import inventory_menu
 
 class RenderOrder(Enum):
     STAIRS = auto()
+    OPEN_DOOR = auto()
     CORPSE = auto()
     ITEM = auto()
+    CLOSED_DOOR = auto()
     ACTOR = auto()
 
 
-def render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, message_log, screen_width, screen_height,
+def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_recompute, message_log, screen_width, screen_height,
                bar_width, panel_height, panel_y, colors, game_state):
     if fov_recompute:
         for y in range(game_map.height):
@@ -26,6 +28,13 @@ def render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, m
 
                 elif game_map.tiles[x][y].explored:
                     tcod.console_set_char_background(con, x, y, game_map.tiles[x][y].dark_color, tcod.BKGND_SET)
+
+    # RENDER ANIMATIONS
+    for animation in animator.animations:
+        frame = animation.frames[animation.current_frame]
+        for char in frame.characters:
+            tcod.console_set_default_foreground(con, char.color)
+            tcod.console_put_char(con, char.x, char.y, char.char, tcod.BKGND_NONE)
 
     entities_in_render_order = sorted(entities, key=lambda n: n.render_order.value)
     for entity in entities_in_render_order:
@@ -52,13 +61,17 @@ def render_all(con, panel, entities, player, game_map, fov_map, fov_recompute, m
 
     if game_state == GameStates.SHOW_INVENTORY:
         inventory_menu(con, 'CHOOSE AN ITEM TO USE...\n', player.inventory, 50, screen_width, screen_height)
+
     elif game_state == GameStates.DROP_INVENTORY:
         inventory_menu(con, 'CHOOSE AN ITEM TO DROP...\n', player.inventory, 50, screen_width, screen_height)
+
     elif game_state in (GameStates.TARGETING, GameStates.LOOKING):
         target_x = player.fighter.target_x
         target_y = player.fighter.target_y
         tcod.console_set_default_foreground(con, tcod.lighter_yellow)
         tcod.console_put_char(con, target_x, target_y, 'X', tcod.BKGND_NONE)
+
+
 
 
 def clear_all(con, entities):

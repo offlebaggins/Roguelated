@@ -9,6 +9,7 @@ class Fighter:
         self.power = power
 
         self.targeting_item = None
+        self.targeting_radius = 3
         self.target_x = 0
         self.target_y = 0
 
