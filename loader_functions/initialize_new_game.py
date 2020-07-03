@@ -8,7 +8,7 @@ from game_map import GameMap
 from game_messages import MessageLog
 from game_states import GameStates
 from animation import Animator
-from bodies import get_human_body
+from bodies import get_human_body, get_god_body
 
 def get_constants():
     window_title = "Roguesimilar"
@@ -29,7 +29,7 @@ def get_constants():
     max_items_per_room = 30
 
     bar_width = 20
-    panel_height = 7
+    panel_height = 10
     panel_y = screen_height - panel_height
 
     message_x = bar_width + 2
@@ -68,11 +68,10 @@ def get_constants():
 
 
 def get_game_variables(constants):
-    fighter_component = Fighter(hp=30, defense=2, power=5)
     inventory_component = Inventory(26)
     body_component = get_human_body()
     player = Entity(int(constants['screen_width'] / 2), int(constants['screen_height'] / 2), '@', tcod.white, "Player",
-                    blocks=True, render_order=RenderOrder.ACTOR, ai=None, fighter=fighter_component,
+                    blocks=True, render_order=RenderOrder.ACTOR, ai=None,
                     inventory=inventory_component, body=body_component)
 
     entities = [player]

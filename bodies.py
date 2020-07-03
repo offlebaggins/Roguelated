@@ -1,4 +1,5 @@
 import tcod
+import random
 
 from typing import List
 from appendages import Appendage
@@ -8,7 +9,7 @@ from game_messages import Message
 
 
 class Body:
-    def __init__(self, appendages: List[Appendage]):
+    def __init__(self, appendages: List[Appendage], max_hp):
         self.appendages: List[Appendage] = appendages
 
         for appendage in appendages:
@@ -17,32 +18,38 @@ class Body:
         if len(self.appendages) > 0:
             self.selected_appendage = self.appendages[0]
 
+        self.hp = max_hp
+        self.max_hp = max_hp
+
     def select_appendage(self, appendage: Appendage):
         results = []
-        results.extend(appendage.select())
-        self.selected_appendage = appendage
+
+        if appendage:
+            results.extend(appendage.select())
+            self.selected_appendage = appendage
 
         return results
 
-    def sever_appendage(self, appendage: Appendage):
-        results = []
-        self.appendages.remove(appendage)
-        results.append(
-            {'message': Message("The {0}'s {1} is severed off.".format(self.owner.name, appendage.name), tcod.red)})
-
-    def get_random_appendage(self) -> Appendage:
-        # TODO: Every appendage has an equal selection bias, maybe tie this to appendage size/mass?
+    def get_random_fighter_appendage(self) -> Appendage:
         choices = []
         for appendage in self.appendages:
-            choices.append({appendage: 1})
+            if appendage.fighter is not None:
+                choices.append(appendage)
+        choice = random.choice(choices)
+        return choice
 
-        return random_choice_from_dict(choices)
 
 
 def get_human_body() -> Body:
-    hand_fighter = Fighter(10, 3, 3)
-    left_hand = Appendage("Left hand", grabs=True, fighter=hand_fighter)
-    right_hand = Appendage("Right hand", grabs=True, fighter=hand_fighter)
-    tail = Appendage("Tail", grabs=True, fighter=Fighter(10, 10, 10))
+    left_hand = Appendage("Left hand", grabs=True, fighter=Fighter(hp=10, defense=0, power=1))
+    right_hand = Appendage("Right hand", grabs=True, fighter=Fighter(hp=10, defense=0, power=1))
+    tail = Appendage("Tail", grabs=True, fighter=Fighter(hp=5, defense=0, power=3))
     appendages = [left_hand, right_hand, tail]
-    return Body(appendages)
+    return Body(appendages, 100)
+
+def get_god_body() -> Body:
+    left_hand = Appendage("Left hand", grabs=True, fighter=Fighter(hp=100, defense=100, power=100))
+    right_hand = Appendage("Right hand", grabs=True, fighter=Fighter(hp=100, defense=100, power=100))
+    tail = Appendage("Tail", grabs=True, fighter=Fighter(hp=100, defense=100, power=100))
+    appendages = [left_hand, right_hand, tail]
+    return Body(appendages, 100)

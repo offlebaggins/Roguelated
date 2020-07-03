@@ -3,18 +3,17 @@ import math
 
 from render_functions import RenderOrder
 from game_messages import Message
-from components.fighter import Fighter
 from components.inventory import Inventory
 from components.item import Item
 from components.structure import Structure
 from typing import List
 from path_functions import add_entities_to_path_map
-from bodies import Body, get_human_body
+from bodies import Body
 
 
 class Entity:
     def __init__(self, x, y, char, color, name, blocks=False, render_order: RenderOrder = RenderOrder.CORPSE,
-                 ai=None, body: Body = None, fighter: Fighter = None, inventory: Inventory = None, item: Item = None,
+                 ai=None, body: Body = None, inventory: Inventory = None, item: Item = None,
                  structure: Structure = None, description=None, block_sight=False):
         self.x = x
         self.y = y
@@ -25,7 +24,6 @@ class Entity:
         self.render_order: RenderOrder = render_order
         self.ai = ai
         self.body: Body = body
-        self.fighter: Fighter = fighter
         self.inventory: Inventory = inventory
         self.item: Item = item
         self.structure: Structure = structure
@@ -33,9 +31,6 @@ class Entity:
 
         if self.ai:
             self.ai.owner = self
-
-        if self.fighter:
-            self.fighter.owner = self
 
         if self.inventory:
             self.inventory.owner = self

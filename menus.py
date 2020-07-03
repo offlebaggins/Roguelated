@@ -49,7 +49,12 @@ def inventory_menu(con, header, inventory, inventory_width, screen_width, screen
 def appendage_menu(con, header, entity, screen_width, screen_height):
     appendages = []
     for appendage in entity.body.appendages:
-        if appendage.grabs:
+        if appendage.fighter:
+            appendages.append('{0} - POW:{1} DEF:{2} HP:{3}/{4}'.format(appendage.name, appendage.fighter.power,
+                                                                            appendage.fighter.defense,
+                                                                            appendage.fighter.hp,
+                                                                            appendage.fighter.max_hp))
+        else:
             appendages.append(appendage.name)
 
     if len(appendages) == 0:

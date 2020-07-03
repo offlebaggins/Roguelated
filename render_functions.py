@@ -15,8 +15,7 @@ class RenderOrder(Enum):
 
 
 def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_recompute, message_log, screen_width,
-               screen_height,
-               bar_width, panel_height, panel_y, colors, game_state):
+               screen_height, bar_width, panel_height, panel_y, game_state, target_x, target_y):
     if fov_recompute:
         for y in range(game_map.height):
             for x in range(game_map.width):
@@ -54,7 +53,7 @@ def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_re
         tcod.console_set_default_foreground(panel, message.color)
         tcod.console_print_ex(panel, message_log.x, y, tcod.BKGND_NONE, tcod.LEFT, message.text)
         y -= 1
-    render_bar(panel, 1, 1, bar_width, 'HP', player.fighter.hp, player.fighter.max_hp, tcod.light_red, tcod.darker_red)
+    render_bar(panel, 1, 1, bar_width, 'HP', player.body.hp, player.body.max_hp, tcod.light_red, tcod.darker_red)
     tcod.console_print_ex(panel, 1, 2, tcod.BKGND_NONE, tcod.LEFT,
                           'LVL {0}'.format(game_map.dungeon_level))
 
@@ -75,11 +74,9 @@ def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_re
     elif game_state == GameStates.DROP_INVENTORY:
         inventory_menu(con, 'CHOOSE AN ITEM TO DROP...\n', player.inventory, 50, screen_width, screen_height)
     elif game_state == GameStates.SWAP_APPENDAGE:
-        appendage_menu(con, "CHOOSE AN APPENDAGE TO SWAP TO...\n", player, screen_width, screen_height)
+        appendage_menu(con, "CHOOSE AN APPENDAGE TO READY...\n", player, screen_width, screen_height)
 
     elif game_state in (GameStates.TARGETING, GameStates.LOOKING):
-        target_x = player.fighter.target_x
-        target_y = player.fighter.target_y
         tcod.console_set_default_foreground(con, tcod.lighter_yellow)
         tcod.console_put_char(con, target_x, target_y, 'X', tcod.BKGND_NONE)
 

@@ -23,8 +23,9 @@ class BasicMonster:
                 move_results = self.owner.move_to(player, game_map, entities, path_map, player)
                 results.extend(move_results)
                 self.stamina -= self.move_cost
-        elif player.fighter.hp > 0:
-            attack_results = self.owner.fighter.attack(player.fighter)
+        elif player.body.hp > 0 and self.owner.body:
+            fighter = self.owner.body.get_random_fighter_appendage().fighter
+            attack_results = fighter.attack_entity(player)
             results.extend(attack_results)
 
         return results

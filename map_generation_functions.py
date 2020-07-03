@@ -12,6 +12,7 @@ from stairs import Stairs
 from random import randint
 from entity import Entity
 from rect import Rect
+from bodies import get_human_body
 
 
 def generate_prison(game_map, player, entities, max_cell_blocks, map_width, map_height):
@@ -175,9 +176,9 @@ def place_entities(room, entities, min_entities_per_room, max_entities_per_room,
 
         if not any([entity for entity in entities if entity.x == x and entity.y == y]):
             ai_component = BasicMonster(fov_radius=10)
-            fighter_component = Fighter(5, 0, 3)
+            body_component = get_human_body()
             monster = Entity(x, y, 'G', tcod.desaturated_green, "Goblin", blocks=True,
-                             render_order=RenderOrder.ACTOR, ai=ai_component, fighter=fighter_component,
+                             render_order=RenderOrder.ACTOR, ai=ai_component, body=body_component,
                              description="It's green and scrawny.")
             entities.append(monster)
 

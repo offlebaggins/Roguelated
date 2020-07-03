@@ -101,10 +101,10 @@ def cast_fireball(*args, **kwargs):
                                        tcod.lighter_orange)})
 
     for entity in entities:
-        if entity.fighter and entity.distance(target_x, target_y) < radius:
+        if entity.body and entity.distance(target_x, target_y) < radius:
             results.append({'message': Message('The {0} gets burned for {1} hit points.'.format(entity.name, damage),
                                                tcod.lighter_orange)})
-            results.extend(entity.fighter.take_damage(damage))
+            results.extend(entity.body.take_damage(damage))
 
     return results
 
@@ -144,10 +144,10 @@ def cast_explosion(*args, **kwargs):
         results.append({'map_changed': True})
 
     for entity in entities:
-        if entity.fighter and entity.distance(target_x, target_y) < radius:
+        if entity.body and entity.distance(target_x, target_y) < radius:
             results.append({'message': Message(
                 'The {0} is caught in the explosion and takes {1} damage.'.format(entity.name, damage),
                 tcod.lighter_orange)})
-            results.extend(entity.fighter.take_damage(damage))
+            results.extend(entity.body.take_damage(damage))
 
     return results

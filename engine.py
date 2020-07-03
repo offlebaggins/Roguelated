@@ -13,7 +13,7 @@ from loader_functions.initialize_new_game import get_constants, get_game_variabl
 from loader_functions.data_loaders import save_game, load_game
 from menus import main_menu, message_box
 from game_map import GameMap
-from animation import Animator, add_explosion_animation
+from animation import Animator
 
 
 def main():
@@ -78,6 +78,9 @@ def main():
 
 
 def play_game(con, player, entities, animator: Animator, game_map: GameMap, message_log, game_state, panel, constants):
+    target_x, target_y = player.x, player.y
+    targeting_item = None
+
     while True:
         fov_algorithm = 2
         fov_light_walls = True
@@ -90,7 +93,7 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
 
         render_all(con, panel, entities, animator, player, game_map, fov_map, fov_recompute, message_log,
                    constants['screen_width'], constants['screen_height'], constants['bar_width'],
-                   constants['panel_height'], constants['panel_y'], constants['colors'], game_state)
+                   constants['panel_height'], constants['panel_y'], game_state, target_x, target_y)
 
         tcod.console_flush()
 
@@ -151,8 +154,6 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
                 if action_type == ActionType.EXECUTE:
                     if game_state == GameStates.TARGETING:
                         targeting_item = player.fighter.targeting_item
-                        target_x = player.fighter.target_x
-                        target_y = player.fighter.target_y
                         item_use_results = player.inventory.use(targeting_item, entities=entities, fov_map=fov_map,
                                                                 game_map=game_map,
                                                                 target_x=target_x, target_y=target_y)
@@ -160,9 +161,6 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
                         game_state = GameStates.ENEMY_TURN
                     elif game_state == GameStates.LOOKING:
                         look_results = []
-
-                        target_x = player.fighter.target_x
-                        target_y = player.fighter.target_y
 
                         looked_at_entities = get_entities_at_location(entities, target_x, target_y)
                         if tcod.map_is_in_fov(fov_map, target_x, target_y):
@@ -202,10 +200,10 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
                             target = get_blocking_entities_at_location(entities, destination_x, destination_y)
 
                             if target:
-                                if target.fighter:
+                                if target.body:
                                     player_fighter = player.body.selected_appendage.fighter
                                     if player_fighter:
-                                        attack_results = player_fighter.attack(target.fighter)
+                                        attack_results = player_fighter.attack_entity(target)
                                         player_turn_results.extend(attack_results)
                                     else:
                                         player_turn_results.append({
@@ -226,11 +224,11 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
 
                     # Targeting
                     elif game_state in (GameStates.TARGETING, GameStates.LOOKING):
-                        new_x = player.fighter.target_x + dx
-                        new_y = player.fighter.target_y + dy
-                        if player.distance(new_x, new_y) < player.fighter.targeting_radius:
-                            player.fighter.target_x = new_x
-                            player.fighter.target_y = new_y
+                        new_x = target_x + dx
+                        new_y = target_y + dy
+                        if player.distance(new_x, new_y) < targeting_radius:
+                            target_x = new_x
+                            target_y = new_y
 
                 elif action_type == ActionType.GRAB:
                     for entity in entities:
@@ -245,8 +243,8 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
 
                 elif action_type == ActionType.LOOK:
                     game_state = GameStates.LOOKING
-                    player.fighter.target_x, player.fighter.target_y = player.x, player.y
-                    player.fighter.targeting_radius = 100
+                    target_x, target_y = player.x, player.y
+                    targeting_radius = 100
 
                 elif action_type == ActionType.WAIT:
                     player_turn_results.append({'message': Message('You stare blankly into space', tcod.yellow)})
@@ -281,7 +279,9 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
 
 
                     elif game_state == GameStates.SWAP_APPENDAGE:
-                        swap_results = player.body.select_appendage(player.body.appendages[option_index])
+                        if option_index < len(player.body.appendages):
+                            item = player.body.appendages[option_index]
+                        swap_results = player.body.select_appendage(item)
                         player_turn_results.extend(swap_results)
                         game_state = GameStates.PLAYER_TURN
 
@@ -339,10 +339,10 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
             if targeting:
                 game_state = GameStates.TARGETING
 
-                player.fighter.targeting_item = targeting
-                player.fighter.targeting_radius = targeting.item.targeting_radius
-                player.fighter.target_x = player.x
-                player.fighter.target_y = player.y
+                targeting_item = targeting
+                targeting_radius = targeting.item.targeting_radius
+                target_x = player.x
+                target_y = player.y
 
                 message_log.add_message(Message("You begin aiming the {0}.".format(targeting.name)))
 
