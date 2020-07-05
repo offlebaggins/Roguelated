@@ -25,7 +25,11 @@ class BasicMonster:
                 self.stamina -= self.move_cost
         elif player.body.hp > 0 and self.owner.body:
             fighter = self.owner.body.get_random_fighter_appendage().fighter
-            attack_results = fighter.attack_entity(player)
-            results.extend(attack_results)
+            if fighter:
+                attack_results = fighter.attack_entity(player)
+                results.extend(attack_results)
+            else:
+                # TODO: make ai run away from player if they have no 'fighter' appendages
+                pass
 
         return results

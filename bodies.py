@@ -4,6 +4,7 @@ import random
 from typing import List
 from appendages import Appendage
 from components.fighter import Fighter
+from components.grabber import Grabber
 from random_utils import random_choice_from_dict
 from game_messages import Message
 
@@ -42,9 +43,43 @@ class Body:
         else:
             return None
 
+    def grab_entity(self, entity):
+        results = []
+
+        grabber = self.selected_appendage.grabber
+
+        # If selected appendage cannot grab, try to grab with next available grabber
+        if grabber is None:
+            for appendage in self.appendages:
+                grabber = appendage.grabber
+                if grabber:
+                    break
+
+        if grabber:
+            results.extend(grabber.grab(entity))
+        else:
+            results.append({'message': Message('You have no available appendages to grab the {0}'.format(entity.name),
+                                               tcod.orange)})
+
+        return results
+
+
 def get_human_body() -> Body:
-    left_hand = Appendage("Left hand", hp=10, grabs=True, fighter=Fighter(defense=0, power=1))
-    right_hand = Appendage("Right hand", hp=10, grabs=True, fighter=Fighter(defense=0, power=1))
-    tail = Appendage("Tail", grabs=True, hp=5, fighter=Fighter(defense=0, power=3))
+    hand_attack_verbs = {
+        'punches': 3,
+        'scratches': 3,
+        'pushes': 1,
+        'shoves': 1
+    }
+    left_hand = Appendage("Left hand", hp=10, grabber=Grabber(),
+                          fighter=Fighter(defense=0, power=1, attack_verbs=hand_attack_verbs))
+    right_hand = Appendage("Right hand", hp=10, grabber=Grabber(),
+                           fighter=Fighter(defense=0, power=1, attack_verbs=hand_attack_verbs))
+
+    tail_attack_verbs = {
+        'whips': 4,
+        'pokes': 2
+    }
+    tail = Appendage("Tail", hp=5, fighter=Fighter(defense=0, power=3, attack_verbs=tail_attack_verbs))
     appendages = [left_hand, right_hand, tail]
     return Body(appendages, 100)

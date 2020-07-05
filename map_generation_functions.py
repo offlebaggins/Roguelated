@@ -41,7 +41,7 @@ def generate_prison(game_map, player, entities, max_cell_blocks, map_width, map_
             for x_pos in range(x, x + w, 4):
                 cell = Rect(x_pos, y, 4, 3)
                 create_room(game_map, cell)
-                place_entities(cell, entities, 1, 1, 3)
+                place_entities(cell, entities, 0, 1, 3)
                 place_door(x_pos + 2, y + 3, entities, game_map)
 
                 cell = Rect(x_pos, y + 6, 4, 3)

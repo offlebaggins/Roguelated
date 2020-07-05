@@ -2,19 +2,22 @@ import tcod
 
 from game_messages import Message
 from components.fighter import Fighter
+from components.grabber import Grabber
 
 
 class Appendage:
-    def __init__(self, name, hp=5, grabs: bool = False, fighter: Fighter = None):
+    def __init__(self, name, hp=5, fighter: Fighter = None, grabber: Grabber = None):
         self.name = name
-        self.grabs = grabs
-        self.fighter = fighter
-        self.owner = None
         self.max_hp = hp
         self.hp = hp
+        self.fighter = fighter
+        self.grabber = grabber
+        self.owner = None
 
         if self.fighter:
             self.fighter.owner = self
+        if self.grabber:
+            self.grabber.owner = self
 
     def select(self):
         results = [{

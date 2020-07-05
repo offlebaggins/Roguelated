@@ -169,6 +169,7 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
                             if looked_at_entities:
                                 for entity in looked_at_entities:
                                     look_results.extend(entity.get_description())
+                                    target_entity = entity
                             else:
                                 if game_map.tiles[target_x][target_y].blocked:
                                     look_results.append({
@@ -235,7 +236,7 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
                 elif action_type == ActionType.GRAB:
                     for entity in entities:
                         if entity.item and entity.x == player.x and entity.y == player.y:
-                            pickup_result = player.inventory.add_item(entity)
+                            pickup_result = player.body.grab_entity(entity)
                             player_turn_results.extend(pickup_result)
                             break
                     else:
@@ -302,7 +303,10 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
                             break
 
                 elif action_type == ActionType.DROP_INVENTORY_ITEM:
-                    game_state = GameStates.DROP_INVENTORY
+                    grabber = player.body.selected_appendage.grabber
+                    if grabber:
+                        player_turn_results.extend(grabber.drop())
+                    # game_state = GameStates.DROP_INVENTORY
 
                 elif action_type == ActionType.SWAP_APPENDAGE:
                     game_state = GameStates.SWAP_APPENDAGE
