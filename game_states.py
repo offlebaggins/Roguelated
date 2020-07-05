@@ -10,3 +10,4 @@ class GameStates(Enum):
     TARGETING = auto()
     LOOKING = auto()
     SWAP_APPENDAGE = auto()
+    TARGET_APPENDAGE = auto()

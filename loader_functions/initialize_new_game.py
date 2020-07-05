@@ -8,7 +8,7 @@ from game_map import GameMap
 from game_messages import MessageLog
 from game_states import GameStates
 from animation import Animator
-from bodies import get_human_body, get_god_body
+from bodies import get_human_body
 
 def get_constants():
     window_title = "Roguesimilar"
@@ -33,7 +33,7 @@ def get_constants():
     panel_y = screen_height - panel_height
 
     message_x = bar_width + 2
-    message_width = screen_width - bar_width - 2
+    message_width = screen_width - bar_width - 4 - bar_width
     message_height = panel_height - 1
 
     colors = {

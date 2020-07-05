@@ -80,6 +80,7 @@ def main():
 def play_game(con, player, entities, animator: Animator, game_map: GameMap, message_log, game_state, panel, constants):
     target_x, target_y = player.x, player.y
     targeting_item = None
+    target_entity = None
 
     while True:
         fov_algorithm = 2
@@ -93,7 +94,8 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
 
         render_all(con, panel, entities, animator, player, game_map, fov_map, fov_recompute, message_log,
                    constants['screen_width'], constants['screen_height'], constants['bar_width'],
-                   constants['panel_height'], constants['panel_y'], game_state, target_x, target_y)
+                   constants['panel_height'], constants['panel_y'], game_state, target_x, target_y,
+                   target_entity)
 
         tcod.console_flush()
 
@@ -197,30 +199,30 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
                         player_turn_results.extend(tile_results)
 
                         if not game_map.is_blocked(destination_x, destination_y):
-                            target = get_blocking_entities_at_location(entities, destination_x, destination_y)
+                            target_appendage = get_blocking_entities_at_location(entities, destination_x, destination_y)
 
-                            if target:
-                                if target.body:
+                            if target_appendage:
+                                if target_appendage.body:
                                     player_fighter = player.body.selected_appendage.fighter
+
                                     if player_fighter:
-                                        attack_results = player_fighter.attack_entity(target)
-                                        player_turn_results.extend(attack_results)
+                                        target_entity = target_appendage
+                                        game_state = GameStates.TARGET_APPENDAGE
                                     else:
                                         player_turn_results.append({
                                             'message': Message("You cannot attack with your {0}.".format(
                                                 player.body.selected_appendage.name), tcod.yellow)
                                         })
-                                elif target.structure:
-                                    structure_interact_results = target.structure.interact(player)
+                                elif target_appendage.structure:
+                                    structure_interact_results = target_appendage.structure.interact(player)
                                     player_turn_results.extend(structure_interact_results)
                             else:
                                 player.move(dx, dy)
-
-                                fov_recompute = True
                         else:
                             message_log.add_message(Message("You slam yourself into the wall!", tcod.orange))
 
-                        game_state = GameStates.ENEMY_TURN
+                        if game_state != GameStates.TARGET_APPENDAGE:
+                            game_state = GameStates.ENEMY_TURN
 
                     # Targeting
                     elif game_state in (GameStates.TARGETING, GameStates.LOOKING):
@@ -281,10 +283,16 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
                     elif game_state == GameStates.SWAP_APPENDAGE:
                         if option_index < len(player.body.appendages):
                             item = player.body.appendages[option_index]
-                        swap_results = player.body.select_appendage(item)
-                        player_turn_results.extend(swap_results)
-                        game_state = GameStates.PLAYER_TURN
+                            swap_results = player.body.select_appendage(item)
+                            player_turn_results.extend(swap_results)
+                            game_state = GameStates.PLAYER_TURN
 
+                    elif game_state == GameStates.TARGET_APPENDAGE:
+                        if option_index < len(target_entity.body.appendages):
+                            target_appendage = target_entity.body.appendages[option_index]
+                            attack_results = player.body.selected_appendage.fighter.attack_appendage(target_appendage)
+                            player_turn_results.extend(attack_results)
+                            game_state = GameStates.ENEMY_TURN
 
                 elif action_type == ActionType.INTERACT:
                     for entity in entities:

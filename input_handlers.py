@@ -26,10 +26,10 @@ def handle_keys(key, game_state):
         return handle_keys_player_dead(key)
     elif game_state in (GameStates.TARGETING, GameStates.LOOKING):
         return handle_keys_targeting(key)
-    elif game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY, GameStates.SWAP_APPENDAGE):
+    elif game_state in (GameStates.SHOW_INVENTORY, GameStates.DROP_INVENTORY,
+                        GameStates.SWAP_APPENDAGE, GameStates.TARGET_APPENDAGE):
         return handle_keys_choose_option(key)
     return action
-
 
 
 def handle_keys_player_turn(key) -> [Action, None]:

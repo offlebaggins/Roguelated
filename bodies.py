@@ -35,21 +35,16 @@ class Body:
         for appendage in self.appendages:
             if appendage.fighter is not None:
                 choices.append(appendage)
-        choice = random.choice(choices)
-        return choice
 
-
+        if len(choices) > 0:
+            choice = random.choice(choices)
+            return choice
+        else:
+            return None
 
 def get_human_body() -> Body:
-    left_hand = Appendage("Left hand", grabs=True, fighter=Fighter(hp=10, defense=0, power=1))
-    right_hand = Appendage("Right hand", grabs=True, fighter=Fighter(hp=10, defense=0, power=1))
-    tail = Appendage("Tail", grabs=True, fighter=Fighter(hp=5, defense=0, power=3))
-    appendages = [left_hand, right_hand, tail]
-    return Body(appendages, 100)
-
-def get_god_body() -> Body:
-    left_hand = Appendage("Left hand", grabs=True, fighter=Fighter(hp=100, defense=100, power=100))
-    right_hand = Appendage("Right hand", grabs=True, fighter=Fighter(hp=100, defense=100, power=100))
-    tail = Appendage("Tail", grabs=True, fighter=Fighter(hp=100, defense=100, power=100))
+    left_hand = Appendage("Left hand", hp=10, grabs=True, fighter=Fighter(defense=0, power=1))
+    right_hand = Appendage("Right hand", hp=10, grabs=True, fighter=Fighter(defense=0, power=1))
+    tail = Appendage("Tail", grabs=True, hp=5, fighter=Fighter(defense=0, power=3))
     appendages = [left_hand, right_hand, tail]
     return Body(appendages, 100)

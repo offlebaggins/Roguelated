@@ -5,11 +5,13 @@ from components.fighter import Fighter
 
 
 class Appendage:
-    def __init__(self, name, grabs: bool = False, fighter: Fighter = None):
+    def __init__(self, name, hp=5, grabs: bool = False, fighter: Fighter = None):
         self.name = name
         self.grabs = grabs
         self.fighter = fighter
         self.owner = None
+        self.max_hp = hp
+        self.hp = hp
 
         if self.fighter:
             self.fighter.owner = self
@@ -20,14 +22,23 @@ class Appendage:
         }]
         return results
 
-    def sever(self):
+    def take_damage(self, amount):
         results = []
-        if self.owner:
-            self.grabs = False
-            self.fighter = None
-            results.append(
-                {'message': Message("The {0}'s {1} is severed.".format(self.owner.owner.name, self.name), tcod.red)})
 
-        # self.owner = None
+        self.hp -= amount
+
+        if self.hp <= 0:
+            self.hp = 0
+            results.append({'message': Message(
+                'The {0}\'s {1} is mangled to a bloody pulp!'.format(self.owner.owner.name, self.name), tcod.darker_crimson)})
+            self.fighter = None
+            # results.append({'dead': self.owner.owner.owner});
+            # results.extend(self.owner.sever())
 
         return results
+
+    def heal(self, amount):
+        self.hp += amount
+
+        if self.hp > self.max_hp:
+            self.hp = self.max_hp

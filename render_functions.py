@@ -15,7 +15,7 @@ class RenderOrder(Enum):
 
 
 def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_recompute, message_log, screen_width,
-               screen_height, bar_width, panel_height, panel_y, game_state, target_x, target_y):
+               screen_height, bar_width, panel_height, panel_y, game_state, target_x, target_y, target_entity):
     if fov_recompute:
         for y in range(game_map.height):
             for x in range(game_map.width):
@@ -47,24 +47,43 @@ def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_re
     tcod.console_set_default_background(panel, tcod.black)
     tcod.console_clear(panel)
 
+
+    # Print player status
+    tcod.console_set_default_foreground(panel, tcod.white)
+    tcod.console_print_ex(panel, 1, 1, tcod.BKGND_NONE, tcod.LEFT, 'Player')
+    for i in range(1, 7):  # big dumb
+        tcod.console_set_char_background(panel, i, 1, tcod.darker_gray)
+        i += 1
+
+    y = 2
+    for appendage in player.body.appendages:
+        render_bar(panel, 1, y, bar_width, appendage.name, appendage.hp, appendage.max_hp,
+                   tcod.light_red, tcod.darker_red)
+        y += 1
+
     # Print game messages
     y = len(message_log.messages)
     for message in message_log.messages:
         tcod.console_set_default_foreground(panel, message.color)
         tcod.console_print_ex(panel, message_log.x, y, tcod.BKGND_NONE, tcod.LEFT, message.text)
         y -= 1
-    render_bar(panel, 1, 1, bar_width, 'HP', player.body.hp, player.body.max_hp, tcod.light_red, tcod.darker_red)
-    tcod.console_print_ex(panel, 1, 2, tcod.BKGND_NONE, tcod.LEFT,
-                          'LVL {0}'.format(game_map.dungeon_level))
 
-    # hand_x = 1 + bar_width
-    # tcod.console_print_ex(panel, hand_x, 0, tcod.BKGND_NONE, tcod.LEFT, "########")
-    # tcod.console_print_ex(panel, hand_x, 1, tcod.BKGND_NONE, tcod.LEFT, "#||||| # |||||")
-    # tcod.console_print_ex(panel, hand_x, 2, tcod.BKGND_NONE, tcod.LEFT, "#||||| # |||||")
-    # tcod.console_print_ex(panel, hand_x, 3, tcod.BKGND_NONE, tcod.LEFT, "#|||||\#/|||||")
-    # tcod.console_print_ex(panel, hand_x, 4, tcod.BKGND_NONE, tcod.LEFT, "#|    |#|    |")
-    # tcod.console_print_ex(panel, hand_x, 5, tcod.BKGND_NONE, tcod.LEFT, "#\____/#\____/")
-    # tcod.console_print_ex(panel, hand_x, 6, tcod.BKGND_NONE, tcod.LEFT, "########")
+    # Print Target entity status
+    if target_entity:
+        x = screen_width - bar_width - 1
+        tcod.console_set_default_foreground(panel, target_entity.color)
+        tcod.console_print_ex(panel, x, 1, tcod.BKGND_NONE, tcod.LEFT, target_entity.name)
+        for i in range(x, x + len(target_entity.name)):
+            tcod.console_set_char_background(panel, i, 1, tcod.darker_gray)
+            i += 1
+
+        y = 2
+        target_body = target_entity.body
+        if target_body:
+            for appendage in target_body.appendages:
+                render_bar(panel, x, y, bar_width, appendage.name, appendage.hp, appendage.max_hp,
+                           tcod.light_red, tcod.darker_red)
+                y += 1
 
     tcod.console_blit(panel, 0, 0, screen_width, panel_height, 0, 0, panel_y)
 
@@ -75,6 +94,10 @@ def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_re
         inventory_menu(con, 'CHOOSE AN ITEM TO DROP...\n', player.inventory, 50, screen_width, screen_height)
     elif game_state == GameStates.SWAP_APPENDAGE:
         appendage_menu(con, "CHOOSE AN APPENDAGE TO READY...\n", player, screen_width, screen_height)
+    elif game_state == GameStates.TARGET_APPENDAGE:
+        appendage_menu(con,
+                       "CHOOSE AN APPENDAGE TO ATTACK WITH YOUR {0}...".format(player.body.selected_appendage.name),
+                       target_entity, screen_width, screen_height)
 
     elif game_state in (GameStates.TARGETING, GameStates.LOOKING):
         tcod.console_set_default_foreground(con, tcod.lighter_yellow)
@@ -109,5 +132,5 @@ def render_bar(panel, x, y, total_width, name, value, maximum, bar_color, back_c
         tcod.console_rect(panel, x, y, bar_width, 1, False, tcod.BKGND_SCREEN)
 
     tcod.console_set_default_foreground(panel, tcod.white)
-    tcod.console_print_ex(panel, int(x + total_width / 2), y, tcod.BKGND_NONE, tcod.CENTER,
+    tcod.console_print_ex(panel, x, y, tcod.BKGND_NONE, tcod.LEFT,
                           '{0}: {1}/{2}'.format(name, value, maximum))
