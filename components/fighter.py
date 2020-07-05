@@ -1,10 +1,11 @@
 import tcod
+import random
 
 from game_messages import Message
 
 
 class Fighter:
-    def __init__(self, defense, power):
+    def __init__(self, defense, power, attack_verbs={'attacks': 1}):
         self.defense = defense
         self.power = power
         self.targeting_item = None
@@ -12,6 +13,7 @@ class Fighter:
         self.target_x = 0
         self.target_y = 0
         self.owner = None
+        self.attack_verbs = attack_verbs
 
     def attack_entity(self, target_entity):
         results = []
@@ -32,12 +34,15 @@ class Fighter:
         results = []
         if target_appendage.fighter:
             target_fighter = target_appendage.fighter
-            damage = self.power - target_fighter.defense
+            attack_verb = random.choice(list(self.attack_verbs))
+
+            damage = self.attack_verbs.get(attack_verb) - target_fighter.defense
 
             if damage > 0:
                 results.append({'message': Message(
-                    'The {0} attacks the {1}\'s {2} '
-                    'with their {3} for {4} damage!'.format(self.owner.owner.owner.name,
+                    'The {0} {1} the {2}\'s {3} '
+                    'with their {4} for {5} damage!'.format(self.owner.owner.owner.name,
+                                                            attack_verb,
                                                             target_fighter.owner.owner.owner.name,
                                                             target_fighter.owner.name,
                                                             self.owner.name,
@@ -50,5 +55,3 @@ class Fighter:
                         target_fighter.owner.name, self.owner.name))})
 
         return results
-
-
