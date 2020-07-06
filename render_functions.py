@@ -57,8 +57,11 @@ def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_re
 
     y = 2
     for appendage in player.body.appendages:
+        text_color = tcod.white
+        if player.body.selected_appendage == appendage:
+            text_color = tcod.gray
         render_bar(panel, 1, y, bar_width, appendage.name, appendage.hp, appendage.max_hp,
-                   tcod.light_red, tcod.darker_red)
+                   tcod.light_red, tcod.darker_red, text_color=text_color)
         y += 1
 
     # Print game messages
@@ -121,7 +124,7 @@ def clear_entity(con, entity):
     tcod.console_put_char(con, entity.x, entity.y, ' ', tcod.BKGND_NONE)
 
 
-def render_bar(panel, x, y, total_width, name, value, maximum, bar_color, back_color):
+def render_bar(panel, x, y, total_width, name, value, maximum, bar_color, back_color, text_color=tcod.white):
     bar_width = int(float(value) / maximum * total_width)
 
     tcod.console_set_default_background(panel, back_color)
@@ -131,6 +134,6 @@ def render_bar(panel, x, y, total_width, name, value, maximum, bar_color, back_c
     if bar_width > 0:
         tcod.console_rect(panel, x, y, bar_width, 1, False, tcod.BKGND_SCREEN)
 
-    tcod.console_set_default_foreground(panel, tcod.white)
+    tcod.console_set_default_foreground(panel, text_color)
     tcod.console_print_ex(panel, x, y, tcod.BKGND_NONE, tcod.LEFT,
                           '{0}: {1}/{2}'.format(name, value, maximum))

@@ -26,7 +26,7 @@ def main():
     game_state = None
     animator = None
 
-    tcod.console_set_custom_font("dejavu16x16_gs_tc.png", tcod.FONT_TYPE_GREYSCALE | tcod.FONT_LAYOUT_TCOD)
+    tcod.console_set_custom_font("Codepage-437.png", tcod.FONT_LAYOUT_CP437)
 
     panel = tcod.console.Console(constants['screen_width'], constants['panel_height'])
 
