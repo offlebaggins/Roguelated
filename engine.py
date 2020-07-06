@@ -59,12 +59,12 @@ def main():
                             show_load_error_message = False
 
                             if action_type == ActionType.NEW_GAME:
-                                player, entities, animator, game_map, message_log, game_state = get_game_variables(
+                                player, entities, animator, turn_count, game_map, message_log, game_state = get_game_variables(
                                     constants)
                                 show_main_menu = False
                             elif action_type == ActionType.LOAD_GAME:
                                 try:
-                                    player, entities, animator, game_map, message_log, game_state = load_game()
+                                    player, entities, animator, turn_count, game_map, message_log, game_state = load_game()
                                     show_main_menu = False
                                 except FileNotFoundError:
                                     show_load_error_message = True
@@ -74,10 +74,12 @@ def main():
                     if event.type == "QUIT":
                         raise SystemExit()
             else:
-                play_game(root_console, player, entities, animator, game_map, message_log, game_state, panel, constants)
+                play_game(root_console, player, entities, animator, turn_count, game_map, message_log, game_state,
+                          panel, constants)
 
 
-def play_game(con, player, entities, animator: Animator, game_map: GameMap, message_log, game_state, panel, constants):
+def play_game(con, player, entities, animator: Animator, turn_count: int, game_map: GameMap, message_log, game_state,
+              panel, constants):
     target_x, target_y = player.x, player.y
     targeting_item = None
     target_entity = None
@@ -95,7 +97,7 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
         render_all(con, panel, entities, animator, player, game_map, fov_map, fov_recompute, message_log,
                    constants['screen_width'], constants['screen_height'], constants['bar_width'],
                    constants['panel_height'], constants['panel_y'], game_state, target_x, target_y,
-                   target_entity)
+                   target_entity, turn_count)
 
         tcod.console_flush()
 
@@ -107,6 +109,7 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
 
         # Handle Game State
         if game_state == GameStates.ENEMY_TURN:
+            turn_count += 1
 
             # Generate path map with all static tiles (ignore entities for now)
             path_map = generate_path_map(game_map, entities=None, player=player)
@@ -142,7 +145,7 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
         # Handle Events
         for event in tcod.event.wait():
             if event.type == "QUIT":
-                save_game(player, entities, animator, game_map, message_log, game_state)
+                save_game(player, entities, animator, turn_count, game_map, message_log, game_state)
                 raise SystemExit()
 
             if event.type == "KEYDOWN":
@@ -155,10 +158,10 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
 
                 if action_type == ActionType.EXECUTE:
                     if game_state == GameStates.TARGETING:
-                        targeting_item = player.fighter.targeting_item
-                        item_use_results = player.inventory.use(targeting_item, entities=entities, fov_map=fov_map,
-                                                                game_map=game_map,
-                                                                target_x=target_x, target_y=target_y)
+                        item_use_results = player.body.use_selected_appendage(entities=entities,
+                                                                              fov_map=fov_map,
+                                                                              game_map=game_map,
+                                                                              target_x=target_x, target_y=target_y)
                         player_turn_results.extend(item_use_results)
                         game_state = GameStates.ENEMY_TURN
                     elif game_state == GameStates.LOOKING:
@@ -220,7 +223,8 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
                             else:
                                 player.move(dx, dy)
                         else:
-                            message_log.add_message(Message("You slam yourself into the wall!", tcod.orange))
+                            player_turn_results.append(
+                                {'message': Message("You slam yourself into the wall!", tcod.orange)})
 
                         if game_state != GameStates.TARGET_APPENDAGE:
                             game_state = GameStates.ENEMY_TURN
@@ -253,35 +257,10 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
                     player_turn_results.append({'message': Message('You stare blankly into space', tcod.yellow)})
                     game_state = GameStates.ENEMY_TURN
 
-                elif action_type == ActionType.TOGGLE_INVENTORY:
-
-                    if game_state == GameStates.SHOW_INVENTORY:
-                        game_state = GameStates.PLAYER_TURN
-                    elif game_state == GameStates.PLAYER_TURN:
-                        clear_all(con, entities)
-                        game_state = GameStates.SHOW_INVENTORY
-
                 elif action_type == ActionType.CHOOSE_OPTION:
                     option_index = action.kwargs.get("option_index", None)
-                    item = None
-                    if option_index < len(player.inventory.items):
-                        item = player.inventory.items[option_index]
-                        # if item:
-                    if game_state == GameStates.SHOW_INVENTORY:
-                        activate_item_results = player.inventory.use(item, fov_map=fov_map,
-                                                                     game_map=game_map,
-                                                                     entities=entities)
-                        player_turn_results.extend(activate_item_results)
-                        game_state = GameStates.ENEMY_TURN
 
-
-                    elif game_state == GameStates.DROP_INVENTORY:
-                        drop_item_results = player.inventory.drop_item(item)
-                        player_turn_results.extend(drop_item_results)
-                        game_state = GameStates.ENEMY_TURN
-
-
-                    elif game_state == GameStates.SWAP_APPENDAGE:
+                    if game_state == GameStates.SWAP_APPENDAGE:
                         if option_index < len(player.body.appendages):
                             item = player.body.appendages[option_index]
                             swap_results = player.body.select_appendage(item)
@@ -302,6 +281,13 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
                             player_turn_results.extend(interact_results)
                             break
 
+                    if game_state == GameStates.PLAYER_TURN:
+                        activate_item_results = player.body.use_selected_appendage(fov_map=fov_map,
+                                                                                   game_map=game_map,
+                                                                                   entities=entities)
+                        player_turn_results.extend(activate_item_results)
+                        game_state = GameStates.ENEMY_TURN
+
                 elif action_type == ActionType.DROP_INVENTORY_ITEM:
                     grabber = player.body.selected_appendage.grabber
                     if grabber:
@@ -315,7 +301,7 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
                     if game_state == GameStates.TARGETING:
                         game_state = GameStates.PLAYER_TURN
                     elif game_state == GameStates.PLAYER_TURN:
-                        save_game(player, entities, animator, game_map, message_log, game_state)
+                        save_game(player, entities, animator, turn_count, game_map, message_log, game_state)
                         main()
                 elif action_type == ActionType.RESTART:
                     main()
@@ -357,6 +343,8 @@ def play_game(con, player, entities, animator: Animator, game_map: GameMap, mess
                 target_y = player.y
 
                 message_log.add_message(Message("You begin aiming the {0}.".format(targeting.name)))
+                # TODO: Replace occurrences of add_message with player_turn_result approach
+                # player_turn_results.append({'message': Message("You begin aiming the {0}.".format(targeting.name))})
 
             if next_floor:
                 entities = game_map.next_floor(player, constants)

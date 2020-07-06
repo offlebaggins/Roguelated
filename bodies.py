@@ -31,6 +31,12 @@ class Body:
 
         return results
 
+    def use_selected_appendage(self, **kwargs):
+        grabber = self.selected_appendage.grabber
+        if grabber:
+            return grabber.use(**kwargs)
+
+
     def get_random_fighter_appendage(self) -> Appendage:
         choices = []
         for appendage in self.appendages:
@@ -61,6 +67,13 @@ class Body:
             results.append({'message': Message('You have no available appendages to grab the {0}'.format(entity.name),
                                                tcod.orange)})
 
+        return results
+
+    def take_damage(self, amount):
+        results = []
+        appendage = self.get_random_fighter_appendage()
+        if appendage:
+            results.extend(appendage.take_damage(amount))
         return results
 
 

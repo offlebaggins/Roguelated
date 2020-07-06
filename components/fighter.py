@@ -39,14 +39,16 @@ class Fighter:
             damage = self.attack_verbs.get(attack_verb) - target_fighter.defense
 
             if damage > 0:
-                results.append({'message': Message(
-                    'The {0} {1} the {2}\'s {3} '
-                    'with their {4} for {5} damage!'.format(self.owner.owner.owner.name,
-                                                            attack_verb,
-                                                            target_fighter.owner.owner.owner.name,
-                                                            target_fighter.owner.name,
-                                                            self.owner.name,
-                                                            damage))})
+                attacker = self.owner.owner.owner
+                message_string = 'The {0} {1} the {2}\'s {3} with their {4} for {5} damage!'.format(
+                    attacker.name,
+                    attack_verb,
+                    target_fighter.owner.owner.owner.name,
+                    target_fighter.owner.name,
+                    self.owner.name,
+                    damage)
+                color = tcod.white if attacker.name == "Player" else tcod.red
+                results.append({'message': Message(message_string, color)})
                 results.extend(target_appendage.take_damage(damage))
             else:
                 results.append(

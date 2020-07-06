@@ -35,6 +35,9 @@ class Appendage:
             results.append({'message': Message(
                 'The {0}\'s {1} is mangled to a bloody pulp!'.format(self.owner.owner.name, self.name), tcod.darker_crimson)})
             self.fighter = None
+            if self.grabber:
+                results.extend(self.grabber.drop())
+                self.grabber = None
             # results.append({'dead': self.owner.owner.owner});
             # results.extend(self.owner.sever())
 

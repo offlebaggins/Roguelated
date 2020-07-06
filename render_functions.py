@@ -15,7 +15,8 @@ class RenderOrder(Enum):
 
 
 def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_recompute, message_log, screen_width,
-               screen_height, bar_width, panel_height, panel_y, game_state, target_x, target_y, target_entity):
+               screen_height, bar_width, panel_height, panel_y, game_state, target_x, target_y, target_entity,
+               turn_count):
     if fov_recompute:
         for y in range(game_map.height):
             for x in range(game_map.width):
@@ -47,9 +48,9 @@ def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_re
     tcod.console_set_default_background(panel, tcod.black)
     tcod.console_clear(panel)
 
-
     # Print player status
     tcod.console_set_default_foreground(panel, tcod.white)
+    tcod.console_print_ex(panel, 1, 0, tcod.BKGND_NONE, tcod.LEFT, f'TURN: {turn_count}')
     tcod.console_print_ex(panel, 1, 1, tcod.BKGND_NONE, tcod.LEFT, 'Player')
     for i in range(1, 7):  # big dumb
         tcod.console_set_char_background(panel, i, 1, tcod.darker_gray)
@@ -57,11 +58,18 @@ def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_re
 
     y = 2
     for appendage in player.body.appendages:
-        text_color = tcod.white
+        text_color = tcod.gray
         if player.body.selected_appendage == appendage:
-            text_color = tcod.gray
-        render_bar(panel, 1, y, bar_width, appendage.name, appendage.hp, appendage.max_hp,
-                   tcod.light_red, tcod.darker_red, text_color=text_color)
+            text_color = tcod.white
+
+        grabber = appendage.grabber
+        if grabber and grabber.grabbed_entity:
+            name = "{0} ({1})".format(appendage.name, grabber.grabbed_entity.char)
+        else:
+            name = appendage.name
+
+        render_bar(panel, 1, y, bar_width, name, appendage.hp, appendage.max_hp,
+                   tcod.light_red, tcod.darkest_red, text_color=text_color)
         y += 1
 
     # Print game messages
@@ -69,6 +77,7 @@ def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_re
     for message in message_log.messages:
         tcod.console_set_default_foreground(panel, message.color)
         tcod.console_print_ex(panel, message_log.x, y, tcod.BKGND_NONE, tcod.LEFT, message.text)
+
         y -= 1
 
     # Print Target entity status

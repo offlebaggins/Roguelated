@@ -16,9 +16,6 @@ def get_constants():
     screen_width: int = 80
     screen_height: int = 50
 
-    map_width: int = 80
-    map_height: int = 43
-
     room_max_size = 20
     room_min_size = 6
     max_rooms = 30
@@ -29,8 +26,11 @@ def get_constants():
     max_items_per_room = 30
 
     bar_width = 20
-    panel_height = 10
+    panel_height = 15
     panel_y = screen_height - panel_height
+
+    map_width: int = 80
+    map_height: int = screen_height - panel_height
 
     message_x = bar_width + 2
     message_width = screen_width - bar_width - 4 - bar_width
@@ -78,6 +78,8 @@ def get_game_variables(constants):
 
     animator = Animator([])
 
+    turn_count = 0
+
     game_map = GameMap(constants['map_width'], constants['map_height'])
     game_map.make_map(constants['max_rooms'], constants['room_min_size'], constants['room_max_size'],
                       constants['map_width'], constants['map_height'], player, entities,
@@ -88,4 +90,4 @@ def get_game_variables(constants):
 
     game_state = GameStates.PLAYER_TURN
 
-    return player, entities, animator, game_map, message_log, game_state
+    return player, entities, animator, turn_count, game_map, message_log, game_state
