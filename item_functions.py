@@ -11,13 +11,9 @@ def heal(*args, **kwargs):
 
     results = []
 
-    if entity.fighter.hp == entity.fighter.max_hp:
-        results.append({'consumed': False,
-                        'message': Message("The {0} is already at full health".format(entity.name),
-                                           tcod.desaturated_green)
-                        })
-    else:
-        entity.fighter.heal(amount)
+    if entity.body:
+        for appendage in entity.body.appendages:
+            appendage.heal(amount)
         results.append({'consumed': True,
                         'message': Message("The {0}\'s wounds begin to heal".format(entity.name), tcod.green)
                         })
@@ -38,7 +34,7 @@ def cast_lighting(*args, **kwargs):
     closest_distance = maximum_range + 1
 
     for entity in entities:
-        if entity.fighter and entity != caster and tcod.map_is_in_fov(fov_map, entity.x, entity.y):
+        if entity.body and entity != caster and tcod.map_is_in_fov(fov_map, entity.x, entity.y):
 
             distance = entity.distance_to(caster)
 
@@ -52,7 +48,7 @@ def cast_lighting(*args, **kwargs):
                             'A lighting bolt fires from the {0} and strikes the {1} for {2} damage!'.format(caster.name,
                                                                                                             target.name,
                                                                                                             damage))})
-        results.extend(target.fighter.take_damage(damage))
+        results.extend(target.body.take_damage(damage))
     else:
         results.append({'consumed': False,
                         'message': Message('There are no enemies in lightning bolt range!', tcod.light_blue)})

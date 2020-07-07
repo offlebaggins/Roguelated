@@ -280,13 +280,14 @@ def play_game(con, player, entities, animator: Animator, turn_count: int, game_m
                             interact_results = entity.structure.interact(player)
                             player_turn_results.extend(interact_results)
                             break
-
-                    if game_state == GameStates.PLAYER_TURN:
-                        activate_item_results = player.body.use_selected_appendage(fov_map=fov_map,
-                                                                                   game_map=game_map,
-                                                                                   entities=entities)
-                        player_turn_results.extend(activate_item_results)
-                        game_state = GameStates.ENEMY_TURN
+                    else:
+                        if game_state == GameStates.PLAYER_TURN:
+                            activate_item_results = player.body.use_selected_appendage(fov_map=fov_map,
+                                                                                       game_map=game_map,
+                                                                                       entities=entities)
+                            if activate_item_results:
+                                player_turn_results.extend(activate_item_results)
+                                game_state = GameStates.ENEMY_TURN
 
                 elif action_type == ActionType.DROP_INVENTORY_ITEM:
                     grabber = player.body.selected_appendage.grabber

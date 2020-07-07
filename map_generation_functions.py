@@ -166,7 +166,7 @@ def place_entities(room, entities, min_entities_per_room, max_entities_per_room,
     number_of_enemies = randint(min_entities_per_room, max_entities_per_room)
     number_of_items = randint(0, max_items_per_room)
 
-    item_chances = {'healing_potion': 0, 'lightning_scroll': 0, 'fireball_scroll': 0,
+    item_chances = {'healing_potion': 10, 'lightning_scroll': 10, 'fireball_scroll': 10,
                     'teleportation_potion': 10, 'explosion_scroll': 10}
 
     for i in range(number_of_enemies):

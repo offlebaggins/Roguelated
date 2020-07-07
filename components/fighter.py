@@ -25,9 +25,9 @@ class Fighter:
 
         if target_appendage:
             results.extend(self.attack_appendage(target_appendage))
-        else:
-            results.append({'message': Message('The {0} swings at the {1} with their {2} but misses!'.format(
-                self.owner.owner.owner.name, target_entity.name, self.owner.name))})
+        # else:
+        #     results.append({'message': Message('The {0} swings at the {1} with their {2} but misses!'.format(
+        #         self.owner.owner.owner.name, target_entity.name, self.owner.name))})
         return results
 
     def attack_appendage(self, target_appendage):
