@@ -50,9 +50,7 @@ def appendage_menu(con, header, entity, screen_width, screen_height):
     appendages = []
     for appendage in entity.body.appendages:
         if appendage.fighter:
-            appendages.append('{0} - POW:{1} DEF:{2} HP:{3}/{4}'.format(appendage.name, appendage.fighter.power,
-                                                                        appendage.fighter.defense,
-                                                                        appendage.hp, appendage.max_hp))
+            appendages.append(appendage.name)
         else:
             appendages.append(appendage.name)
 

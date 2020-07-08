@@ -6,10 +6,13 @@ from components.grabber import Grabber
 
 
 class Appendage:
-    def __init__(self, name, hp=5, fighter: Fighter = None, grabber: Grabber = None):
+    def __init__(self, name, hp=5, pain_severity = 25, fighter: Fighter = None, grabber: Grabber = None):
         self.name = name
         self.max_hp = hp
         self.hp = hp
+
+        self.pain_severity = pain_severity
+
         self.fighter = fighter
         self.grabber = grabber
         self.owner = None
@@ -48,3 +51,7 @@ class Appendage:
 
         if self.hp > self.max_hp:
             self.hp = self.max_hp
+
+    def get_pain(self):
+        return self.pain_severity * (1 - (self.hp / self.max_hp))
+

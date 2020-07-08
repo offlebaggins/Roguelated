@@ -10,7 +10,7 @@ from game_messages import Message
 
 
 class Body:
-    def __init__(self, appendages: List[Appendage], max_hp):
+    def __init__(self, appendages: List[Appendage], pain_tolerance: int=100):
         self.appendages: List[Appendage] = appendages
 
         for appendage in appendages:
@@ -19,8 +19,7 @@ class Body:
         if len(self.appendages) > 0:
             self.selected_appendage = self.appendages[0]
 
-        self.hp = max_hp
-        self.max_hp = max_hp
+        self.pain_tolerance = pain_tolerance
 
     def select_appendage(self, appendage: Appendage):
         results = []
@@ -66,21 +65,38 @@ class Body:
         else:
             results.append({'message': Message('You have no available appendages to grab the {0}'.format(entity.name),
                                                tcod.orange)})
-
         return results
 
-    def take_damage(self, amount):
+    def take_damage(self, amount, appendage=None):
         results = []
-        appendage = self.get_random_fighter_appendage()
+        if appendage is None:
+            appendage = self.get_random_fighter_appendage()
+
         if appendage:
             results.extend(appendage.take_damage(amount))
+
+        pain = self.get_pain()
+        print(pain)
+        if pain >= self.pain_tolerance:
+            print(self.owner.name + " is dying!!")
+            results.append({'dead': self})
         return results
+
+    def get_pain(self) -> int:
+        pain = 0
+        for appendage in self.appendages:
+            pain += appendage.get_pain()
+        return pain
+
+    def get_pain_percent(self) -> int:
+        return int((self.get_pain() / self.pain_tolerance) * 100)
 
 
 def get_human_body() -> Body:
     hand_attack_verbs = {
         'punches': 3,
         'scratches': 3,
+        'bashes': 2,
         'pushes': 1,
         'shoves': 1
     }
@@ -90,9 +106,10 @@ def get_human_body() -> Body:
                            fighter=Fighter(defense=0, power=1, attack_verbs=hand_attack_verbs))
 
     tail_attack_verbs = {
-        'whips': 4,
-        'pokes': 2
+        'whips': 2,
+        'thwaps': 1,
+        'pokes': 1
     }
     tail = Appendage("Tail", hp=5, fighter=Fighter(defense=0, power=3, attack_verbs=tail_attack_verbs))
     appendages = [left_hand, right_hand, tail]
-    return Body(appendages, 100)
+    return Body(appendages, pain_tolerance=50)

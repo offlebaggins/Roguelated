@@ -51,7 +51,7 @@ def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_re
     # Print player status
     tcod.console_set_default_foreground(panel, tcod.white)
     tcod.console_print_ex(panel, 1, 0, tcod.BKGND_NONE, tcod.LEFT, f'TURN: {turn_count}')
-    tcod.console_print_ex(panel, 1, 1, tcod.BKGND_NONE, tcod.LEFT, 'Player')
+    tcod.console_print_ex(panel, 1, 1, tcod.BKGND_NONE, tcod.LEFT, f'Player PAIN: {player.body.get_pain_percent()}%')
     for i in range(1, 7):  # big dumb
         tcod.console_set_char_background(panel, i, 1, tcod.darker_gray)
         i += 1
