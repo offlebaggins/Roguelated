@@ -84,7 +84,10 @@ def render_all(con, panel, entities, animator, player, game_map, fov_map, fov_re
     if target_entity:
         x = screen_width - bar_width - 1
         tcod.console_set_default_foreground(panel, target_entity.color)
-        tcod.console_print_ex(panel, x, 1, tcod.BKGND_NONE, tcod.LEFT, target_entity.name)
+        string = target_entity.name
+        if target_entity.body:
+            string = f'{target_entity.name} PAIN: {target_entity.body.get_pain_percent()}%'
+        tcod.console_print_ex(panel, x, 1, tcod.BKGND_NONE, tcod.LEFT, string)
         for i in range(x, x + len(target_entity.name)):
             tcod.console_set_char_background(panel, i, 1, tcod.darker_gray)
             i += 1

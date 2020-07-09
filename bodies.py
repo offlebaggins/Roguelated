@@ -1,5 +1,6 @@
 import tcod
 import random
+import json
 
 from typing import List
 from appendages import Appendage
@@ -34,7 +35,6 @@ class Body:
         grabber = self.selected_appendage.grabber
         if grabber:
             return grabber.use(**kwargs)
-
 
     def get_random_fighter_appendage(self) -> Appendage:
         choices = []
@@ -76,10 +76,8 @@ class Body:
             results.extend(appendage.take_damage(amount))
 
         pain = self.get_pain()
-        print(pain)
         if pain >= self.pain_tolerance:
-            print(self.owner.name + " is dying!!")
-            results.append({'dead': self})
+            results.append({'dead': self.owner})
         return results
 
     def get_pain(self) -> int:
@@ -111,5 +109,15 @@ def get_human_body() -> Body:
         'pokes': 1
     }
     tail = Appendage("Tail", hp=5, fighter=Fighter(defense=0, power=3, attack_verbs=tail_attack_verbs))
-    appendages = [left_hand, right_hand, tail]
-    return Body(appendages, pain_tolerance=50)
+
+    thrumbus = Appendage("Thrumbus", hp=10, pain_severity=1000)
+    appendages = [left_hand, right_hand, tail, thrumbus]
+    body = Body(appendages, pain_tolerance=50)
+    return body
+
+
+def load_body() -> Body:
+    with "bodies.json" as json_file:
+        #TODO: SERIALIZE APPENDAGES
+        return Body(**json.load(json_file))
+
