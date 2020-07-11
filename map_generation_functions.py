@@ -82,6 +82,59 @@ def generate_prison(game_map, player, entities, max_cell_blocks, map_width, map_
         prev_x, prev_y = x, y
 
 
+def generate_cell_block(game_map, entities, x_start, y_start, wall_width, wall_height, double_sided: bool = True,
+                        cell_width: int = 3, cell_height: int = 4):
+    if wall_width > wall_height:
+        # Horizontal cell block
+        cell_count = int(wall_width / cell_width)
+        width = x_start + wall_width
+        height = y_start + wall_height + (cell_height * 2)
+    else:
+        # Vertical cell block
+        cell_count = int(wall_height / cell_height)
+        width = x_start + wall_width + (cell_width * 2)
+        height = y_start + wall_height
+
+    x = x_start
+    y = y_start
+
+    # Check if cell block is within map
+    if width < game_map.width and x > 0 and height < game_map.height and y > 0:
+        for i in range(cell_count):
+            if wall_width > wall_height:
+                # Create horizontal cell block segment
+                # Create top cell
+                create_room(game_map, Rect(x, y, cell_width, cell_height))
+                place_door(x + int(cell_width/2), y + cell_height, entities, game_map)
+
+                # Create hall segment
+                for _x in range(x, x + cell_width + 1):
+                    for _y in range(y + cell_height + 1, y + cell_height + 1 + wall_height):
+                        game_map.tiles[_x][_y].hollow()
+                # Create bottom room
+                if double_sided:
+                    create_room(game_map, Rect(x, y + 1 + cell_height + wall_height, cell_width, cell_height))
+                    place_door(x + int(cell_width/2), y + cell_height + wall_height + 1, entities, game_map)
+
+                x += cell_width
+            else:
+                # Create vertical cell block segment
+                create_room(game_map, Rect(x, y, cell_width, cell_height))
+                place_door(x + cell_width, y + int(cell_height/2), entities, game_map)
+
+                # Create hall segment
+                for _x in range(x + cell_width + 1, x + cell_width + 1 + wall_width):
+                    for _y in range(y, y + cell_height + 1):
+                        game_map.tiles[_x][_y].hollow()
+
+                # Create right room
+                if double_sided:
+                    create_room(game_map, Rect(x + cell_width + 1 + wall_width, y, cell_width, cell_height))
+                    place_door(x + cell_width + wall_width + 1, y + int(cell_height/2), entities, game_map)
+
+                y += cell_height
+
+
 def generate_dungeon(game_map, max_rooms, room_min_size, room_max_size, map_width, map_height, player, entities,
                      min_entities_per_room, max_entities_per_room, max_items_per_room):
     rooms = []
