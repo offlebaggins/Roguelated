@@ -1,5 +1,6 @@
 import tcod
 import math
+import random
 
 from components.fighter import Fighter
 from render_functions import RenderOrder
@@ -15,124 +16,193 @@ from rect import Rect
 from bodies import get_human_body
 
 
-def generate_prison(game_map, player, entities, max_cell_blocks, map_width, map_height):
+def generate_prison(game_map, player, entities, min_cell_size, max_cell_size, min_hall_width, max_hall_width,
+                    min_cells_per_block, max_cells_per_block):
+    cell_blocks = []
+    connector_rooms = []
+
+    cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
+
+    # Create initial cell block
+    if randint(0, 1) == 0:
+        hall_width = cell_width * randint(min_cells_per_block, max_cells_per_block)
+        hall_height = randint(min_hall_width, max_hall_width)
+    else:
+        hall_width = randint(min_hall_width, max_hall_width)
+        hall_height = cell_height * randint(min_cells_per_block, max_cells_per_block)
+
+    x, y = 20, 10
+    player.x, player.y = x + 1, y + 1
+    generate_cell_block(game_map, entities, x, y, hall_width, hall_height, True, cell_width, cell_height)
+
+    connector_rooms = add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height)
+
+    while len(connector_rooms) > 0:
+        for connector_room in connector_rooms:
+            room_size = connector_room.x2 - connector_room.x1
+
+            # TODO: Vanquish magic numbers in mag gen
+            new_cell_blocks = []
+            # Create new cell block for each side of connector room
+            # Attempt to add cell block on right side
+            cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
+            hall_width, hall_height = cell_width * randint(min_cells_per_block, max_cells_per_block), randint(
+                min_hall_width, max_hall_width)
+            x = connector_room.x2
+            y = connector_room.y1
+            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, True, cell_width, cell_height):
+                connector_rooms.extend(
+                    add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
+
+            # Attempt to add cell block on left side
+            cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
+            hall_width, hall_height = cell_width * randint(min_cells_per_block, max_cells_per_block), randint(
+                min_hall_width, max_hall_width)
+            x = connector_room.x1 - hall_width
+            y = connector_room.y1
+            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, True, cell_width, cell_height):
+                connector_rooms.extend(
+                    add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
+
+            # Attempt to add cell block on top
+            cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
+            hall_width, hall_height = randint(min_hall_width, max_hall_width), cell_height * randint(
+                min_cells_per_block, max_cells_per_block)
+            x = connector_room.x1
+            y = connector_room.y1 - hall_height
+            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, True, cell_width,
+                                   cell_height):
+                connector_rooms.extend(
+                    add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
+
+            # Attempt to add cell block on bottom
+            cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
+            hall_width, hall_height = randint(min_hall_width, max_hall_width), cell_height * randint(
+                min_cells_per_block, max_cells_per_block)
+            x = connector_room.x1
+            y = connector_room.y2
+            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, True, cell_width,
+                                   cell_height):
+                connector_rooms.extend(
+                    add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
+
+            # If no new cell blocks were added, remove this connector room from connector rooms list
+            if len(new_cell_blocks) == 0:
+                connector_rooms.remove(connector_room)
+
+
+def add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height):
+    connector_rooms = []
+
+    if hall_width > hall_height:
+        # Add connector rooms to the left & right
+        room_size = hall_height + (cell_height * 2) + 1
+        right_room = Rect(x + hall_width, y, room_size, room_size)
+        if create_room(game_map, right_room, no_overlap=True):
+            connector_rooms.append(right_room)
+        left_room = Rect(x - room_size, y, room_size, room_size)
+        if create_room(game_map, left_room, no_overlap=True):
+            connector_rooms.append(left_room)
+    else:
+        # Add connector rooms above/below
+        room_size = hall_width + (cell_width * 2) + 1
+        top_room = Rect(x, y - room_size, room_size, room_size)
+        if create_room(game_map, top_room, no_overlap=True):
+            connector_rooms.append(top_room)
+        bottom_room = Rect(x, y + hall_height, room_size, room_size)
+        if create_room(game_map, bottom_room, no_overlap=True):
+            connector_rooms.append(bottom_room)
+
+    return connector_rooms
+
+
+def generate_level(game_map, player, entities, max_cell_blocks, map_width, map_height):
     cell_blocks = []
 
-    prev_x, prev_y = 0, 0
+    for i in range(max_cell_blocks):
+        # Get position, width, & height
+        cell_width, cell_height = randint(3, 5), randint(3, 5)
 
-    for r in range(max_cell_blocks):
-        w = 31
-        h = 10
-        x = randint(0, map_width - w - 1)
-        y = randint(0, map_height - h - 1)
+        if randint(0, 1) == 1:
+            hall_width = randint(5, 30)
+            hall_height = randint(1, 5)
+            w = hall_width
+            h = hall_height + (cell_height * 2) + 2
+        else:
+            hall_width = randint(1, 5)
+            hall_height = randint(5, 30)
+            w = hall_width + (cell_width * 2) + 2
+            h = hall_height
 
-        cell_block = Rect(x, y, w, h)
+        x, y = randint(0, map_width - w), randint(0, map_height - h)
 
-        for other_cell_block in cell_blocks:
-            if cell_block.intersect(other_cell_block):
+        for cell_block in cell_blocks:
+            if Rect(x, y, w, h).intersect(cell_block):
+                max_cell_blocks += 1
                 break
         else:
-
-            cell_blocks.append(cell_block)
-
-            hall = Rect(x + 1, y + 3, w - 1, 3)
-            create_room(game_map, hall)
-
-            for x_pos in range(x, x + w, 4):
-                cell = Rect(x_pos, y, 4, 3)
-                create_room(game_map, cell)
-                place_entities(cell, entities, 0, 1, 3)
-                place_door(x_pos + 2, y + 3, entities, game_map)
-
-                cell = Rect(x_pos, y + 6, 4, 3)
-                create_room(game_map, cell)
-                place_entities(cell, entities, 1, 1, 3)
-                place_door(x_pos + 2, y + 6, entities, game_map)
-
-            if len(cell_blocks) == 1:
-                player.x = x + 1
-                player.y = y + 1
-
-            else:
-                path_map = tcod.map_new(game_map.width, game_map.height)
-                # Create path with blocked cells walkable to carve out paths
-                # This is a bad idea isnt it
-                for y1 in range(game_map.height):
-                    for x1 in range(game_map.width):
-                        if game_map.tiles[x1][y1].blocked:
-                            # Make walkable if not adjacent to unblocked tile
-                            tcod.map_set_properties(path_map, x1, y1, True, False)
-
-                        else:
-                            tcod.map_set_properties(path_map, x1, y1, True, False)
-
-                # Allocate a A* path
-                my_path = tcod.path_new_using_map(path_map, 1.41)
-                if x > prev_x:
-                    path = my_path.get_path(x + 1, y + 5, prev_x + w, prev_y + 5)
-                else:
-                    path = my_path.get_path(x + w, y + 5, prev_x + 1, prev_y + 5)
-                if path:
-                    for point in path:
-                        game_map.tiles[point[0]][point[1]].hollow()
-
-                tcod.path_delete(my_path)
-                tcod.map_delete(path_map)
-
-        prev_x, prev_y = x, y
+            player.x = x + 1
+            player.y = y + 1
+            generate_cell_block(game_map, entities, x, y, hall_width, hall_height,
+                                cell_width=cell_width, cell_height=cell_height, double_sided=True)
+            cell_blocks.append(Rect(x, y, w, h))
 
 
-def generate_cell_block(game_map, entities, x_start, y_start, wall_width, wall_height, double_sided: bool = True,
+def generate_cell_block(game_map, entities, x_start, y_start, hall_width, hall_height, double_sided: bool = True,
                         cell_width: int = 3, cell_height: int = 4):
-    if wall_width > wall_height:
+    if hall_width > hall_height:
         # Horizontal cell block
-        cell_count = int(wall_width / cell_width)
-        width = x_start + wall_width
-        height = y_start + wall_height + (cell_height * 2)
+        cell_count = int(hall_width / cell_width)
+        width = x_start + hall_width
+        height = y_start + hall_height + (cell_height * 2)
     else:
         # Vertical cell block
-        cell_count = int(wall_height / cell_height)
-        width = x_start + wall_width + (cell_width * 2)
-        height = y_start + wall_height
+        cell_count = int(hall_height / cell_height)
+        width = x_start + hall_width + (cell_width * 2)
+        height = y_start + hall_height
 
     x = x_start
     y = y_start
 
-    # Check if cell block is within map
+    # Check if cell block is within map and there are no other rooms in the way
     if width < game_map.width and x > 0 and height < game_map.height and y > 0:
-        for i in range(cell_count):
-            if wall_width > wall_height:
-                # Create horizontal cell block segment
-                # Create top cell
-                create_room(game_map, Rect(x, y, cell_width, cell_height))
-                place_door(x + int(cell_width/2), y + cell_height, entities, game_map)
+        if game_map.rect_is_blocked(Rect(x, y, width - x, height - y)):
+            for i in range(cell_count):
+                if hall_width > hall_height:
+                    # Create horizontal cell block segment
+                    # Create top cell
+                    create_room(game_map, Rect(x, y, cell_width, cell_height))
+                    place_door(x + int(cell_width / 2), y + cell_height, entities, game_map)
 
-                # Create hall segment
-                for _x in range(x, x + cell_width + 1):
-                    for _y in range(y + cell_height + 1, y + cell_height + 1 + wall_height):
-                        game_map.tiles[_x][_y].hollow()
-                # Create bottom room
-                if double_sided:
-                    create_room(game_map, Rect(x, y + 1 + cell_height + wall_height, cell_width, cell_height))
-                    place_door(x + int(cell_width/2), y + cell_height + wall_height + 1, entities, game_map)
+                    # Create hall segment
+                    for _x in range(x, x + cell_width + 1):
+                        for _y in range(y + cell_height + 1, y + cell_height + 1 + hall_height):
+                            game_map.tiles[_x][_y].hollow()
+                    # Create bottom room
+                    if double_sided:
+                        create_room(game_map, Rect(x, y + 1 + cell_height + hall_height, cell_width, cell_height))
+                        place_door(x + int(cell_width / 2), y + cell_height + hall_height + 1, entities, game_map)
 
-                x += cell_width
-            else:
-                # Create vertical cell block segment
-                create_room(game_map, Rect(x, y, cell_width, cell_height))
-                place_door(x + cell_width, y + int(cell_height/2), entities, game_map)
+                    x += cell_width
+                else:
+                    # Create vertical cell block segment
+                    create_room(game_map, Rect(x, y, cell_width, cell_height))
+                    place_door(x + cell_width, y + int(cell_height / 2), entities, game_map)
 
-                # Create hall segment
-                for _x in range(x + cell_width + 1, x + cell_width + 1 + wall_width):
-                    for _y in range(y, y + cell_height + 1):
-                        game_map.tiles[_x][_y].hollow()
+                    # Create hall segment
+                    for _x in range(x + cell_width + 1, x + cell_width + 1 + hall_width):
+                        for _y in range(y, y + cell_height + 1):
+                            game_map.tiles[_x][_y].hollow()
 
-                # Create right room
-                if double_sided:
-                    create_room(game_map, Rect(x + cell_width + 1 + wall_width, y, cell_width, cell_height))
-                    place_door(x + cell_width + wall_width + 1, y + int(cell_height/2), entities, game_map)
+                    # Create right room
+                    if double_sided:
+                        create_room(game_map, Rect(x + cell_width + 1 + hall_width, y, cell_width, cell_height))
+                        place_door(x + cell_width + hall_width + 1, y + int(cell_height / 2), entities, game_map)
 
-                y += cell_height
+                    y += cell_height
+            return True
+
+    return False
 
 
 def generate_dungeon(game_map, max_rooms, room_min_size, room_max_size, map_width, map_height, player, entities,
@@ -188,10 +258,18 @@ def place_door(x, y, entities, game_map):
     entities.append(door_entity)
 
 
-def create_room(game_map, room: Rect):
+def create_room(game_map, room: Rect, no_overlap=False):
+    if room.x1 < 0 or room.x2 > game_map.width or room.y1 < 0 or room.y2 > game_map.height:
+        return False
+
+    if no_overlap:
+        if not game_map.rect_is_blocked(room):
+            return False
+
     for x in range(room.x1 + 1, room.x2):
         for y in range(room.y1 + 1, room.y2):
             game_map.tiles[x][y].hollow()
+    return True
 
 
 def create_h_tunnel(game_map, x1, x2, y):

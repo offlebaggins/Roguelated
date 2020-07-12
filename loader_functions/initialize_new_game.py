@@ -36,6 +36,13 @@ def get_constants():
     message_width = screen_width - bar_width - 4 - bar_width
     message_height = panel_height - 1
 
+    min_cell_size = 3
+    max_cell_size = 6
+    min_hall_width = 1
+    max_hall_width = 4
+    min_cells_per_block = 1
+    max_cells_per_block = 5
+
     colors = {
         'dark_wall': tcod.Color(20, 20, 20),
         'dark_ground': tcod.Color(40, 40, 40),
@@ -61,7 +68,13 @@ def get_constants():
         'message_x': message_x,
         'message_width': message_width,
         'message_height': message_height,
-        'colors': colors
+        'colors': colors,
+        'min_cell_size': min_cell_size,
+        'max_cell_size': max_cell_size,
+        'min_hall_width': min_hall_width,
+        'max_hall_width': max_hall_width,
+        'min_cells_per_block': min_cells_per_block,
+        'max_cells_per_block': max_cells_per_block
     }
 
     return constants
@@ -81,10 +94,7 @@ def get_game_variables(constants):
     turn_count = 0
 
     game_map = GameMap(constants['map_width'], constants['map_height'])
-    game_map.make_map(constants['max_rooms'], constants['room_min_size'], constants['room_max_size'],
-                      constants['map_width'], constants['map_height'], player, entities,
-                      constants['min_entities_per_room'], constants['max_entities_per_room'],
-                      constants['max_items_per_room'])
+    game_map.make_map(player, entities, constants)
 
     message_log = MessageLog(constants['message_x'], constants['message_width'], constants['message_height'])
 
