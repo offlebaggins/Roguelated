@@ -3,7 +3,7 @@ import tcod
 from random import randint
 
 from tile import Tile
-from map_generation_functions import generate_dungeon, generate_prison, generate_cell_block
+from map_generation_functions import generate_prison, generate_cell_block
 
 
 class GameMap:
@@ -19,8 +19,6 @@ class GameMap:
 
     def make_map(self, player, entities, constants):
         self.tiles = self.initialize_tiles()
-        # generate_dungeon(self, max_rooms, room_min_size, room_max_size, map_width, map_height, player, entities,
-        #          min_entities_per_room, max_entities_per_room, max_items_per_room)
 
         generate_prison(self, player, entities, constants['min_cell_size'], constants['max_cell_size'],
                         constants['min_hall_width'], constants['max_hall_width'], constants['min_cells_per_block'],

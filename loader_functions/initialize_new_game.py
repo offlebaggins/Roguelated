@@ -41,7 +41,7 @@ def get_constants():
     min_hall_width = 1
     max_hall_width = 4
     min_cells_per_block = 1
-    max_cells_per_block = 5
+    max_cells_per_block = 4
 
     colors = {
         'dark_wall': tcod.Color(20, 20, 20),

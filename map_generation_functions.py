@@ -18,77 +18,65 @@ from bodies import get_human_body
 
 def generate_prison(game_map, player, entities, min_cell_size, max_cell_size, min_hall_width, max_hall_width,
                     min_cells_per_block, max_cells_per_block):
-    cell_blocks = []
-    connector_rooms = []
+    room_size = randint(5, 7)
 
-    cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
-
-    # Create initial cell block
-    if randint(0, 1) == 0:
-        hall_width = cell_width * randint(min_cells_per_block, max_cells_per_block)
-        hall_height = randint(min_hall_width, max_hall_width)
-    else:
-        hall_width = randint(min_hall_width, max_hall_width)
-        hall_height = cell_height * randint(min_cells_per_block, max_cells_per_block)
-
-    x, y = 20, 10
+    x = randint(0, game_map.width - room_size - 1)
+    y = randint(0, game_map.height - room_size - 1)
     player.x, player.y = x + 1, y + 1
-    generate_cell_block(game_map, entities, x, y, hall_width, hall_height, True, cell_width, cell_height)
 
-    connector_rooms = add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height)
+    start_room = Rect(x, y, room_size, room_size)
+    create_room(game_map, start_room)
+    connector_rooms = [start_room]
 
-    while len(connector_rooms) > 0:
-        for connector_room in connector_rooms:
-            room_size = connector_room.x2 - connector_room.x1
+    for connector_room in connector_rooms:
+        # Create new cell block for each side of connector room
+        place_entities(connector_room, entities, 0, 1, 5)
+        # Attempt to add cell block on right side
+        cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
+        hall_width, hall_height = cell_width * randint(min_cells_per_block, max_cells_per_block), randint(
+            min_hall_width, max_hall_width)
+        x = connector_room.x2
+        y = int((connector_room.y1 + connector_room.y2) / 2) - cell_height - int(hall_height / 2)
+        double_sided = random.choice([True, False])
+        if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided, cell_width, cell_height):
+            connector_rooms.extend(
+                add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
 
-            # TODO: Vanquish magic numbers in mag gen
-            new_cell_blocks = []
-            # Create new cell block for each side of connector room
-            # Attempt to add cell block on right side
-            cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
-            hall_width, hall_height = cell_width * randint(min_cells_per_block, max_cells_per_block), randint(
-                min_hall_width, max_hall_width)
-            x = connector_room.x2
-            y = connector_room.y1
-            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, True, cell_width, cell_height):
-                connector_rooms.extend(
-                    add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
+        # Attempt to add cell block on left side
+        cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
+        hall_width, hall_height = cell_width * randint(min_cells_per_block, max_cells_per_block), randint(
+            min_hall_width, max_hall_width)
+        x = connector_room.x1 - hall_width
+        y = int((connector_room.y1 + connector_room.y2) / 2) - cell_height - int(hall_height / 2)
+        double_sided = random.choice([True, False])
+        if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided, cell_width, cell_height):
+            connector_rooms.extend(
+                add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
 
-            # Attempt to add cell block on left side
-            cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
-            hall_width, hall_height = cell_width * randint(min_cells_per_block, max_cells_per_block), randint(
-                min_hall_width, max_hall_width)
-            x = connector_room.x1 - hall_width
-            y = connector_room.y1
-            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, True, cell_width, cell_height):
-                connector_rooms.extend(
-                    add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
+        # Attempt to add cell block on top
+        cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
+        hall_width, hall_height = randint(min_hall_width, max_hall_width), cell_height * randint(
+            min_cells_per_block, max_cells_per_block)
+        x = int((connector_room.x1 + connector_room.x2) / 2) - cell_width - int(hall_width / 2)
+        y = connector_room.y1 - hall_height
+        double_sided = random.choice([True, False])
+        if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided, cell_width,
+                               cell_height):
+            connector_rooms.extend(
+                add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
 
-            # Attempt to add cell block on top
-            cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
-            hall_width, hall_height = randint(min_hall_width, max_hall_width), cell_height * randint(
-                min_cells_per_block, max_cells_per_block)
-            x = connector_room.x1
-            y = connector_room.y1 - hall_height
-            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, True, cell_width,
-                                   cell_height):
-                connector_rooms.extend(
-                    add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
+        # Attempt to add cell block on bottom
+        cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
+        hall_width, hall_height = randint(min_hall_width, max_hall_width), cell_height * randint(
+            min_cells_per_block, max_cells_per_block)
+        x = int((connector_room.x1 + connector_room.x2) / 2) - cell_width - int(hall_width / 2)
+        y = connector_room.y2
+        double_sided = random.choice([True, False])
+        if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided, cell_width,
+                               cell_height):
+            connector_rooms.extend(
+                add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
 
-            # Attempt to add cell block on bottom
-            cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
-            hall_width, hall_height = randint(min_hall_width, max_hall_width), cell_height * randint(
-                min_cells_per_block, max_cells_per_block)
-            x = connector_room.x1
-            y = connector_room.y2
-            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, True, cell_width,
-                                   cell_height):
-                connector_rooms.extend(
-                    add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
-
-            # If no new cell blocks were added, remove this connector room from connector rooms list
-            if len(new_cell_blocks) == 0:
-                connector_rooms.remove(connector_room)
 
 
 def add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height):
@@ -166,6 +154,7 @@ def generate_cell_block(game_map, entities, x_start, y_start, hall_width, hall_h
 
     # Check if cell block is within map and there are no other rooms in the way
     if width < game_map.width and x > 0 and height < game_map.height and y > 0:
+        # TODO: Map Gen: Stop cell blocks from overlapping rooms (something to fix in game_map.rect_is_blocked() maybe?)
         if game_map.rect_is_blocked(Rect(x, y, width - x, height - y)):
             for i in range(cell_count):
                 if hall_width > hall_height:
