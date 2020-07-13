@@ -44,6 +44,8 @@ class Appendage:
             # results.append({'dead': self.owner.owner.owner});
             # results.extend(self.owner.sever())
 
+        if self.owner:
+            results.extend(self.owner.process_pain())
         return results
 
     def heal(self, amount):

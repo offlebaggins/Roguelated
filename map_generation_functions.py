@@ -32,7 +32,7 @@ def generate_prison(game_map, player, entities, min_cell_size, max_cell_size, mi
         # Create new cell block for each side of connector room
         place_entities(connector_room, entities, 0, 1, 5)
 
-        for i in range(100):  # this is dumb maybe?
+        for i in range(1000):  # this is dumb maybe?
             # Attempt to add cell block on right side
             cell_width, cell_height = randint(min_cell_size, max_cell_size), randint(min_cell_size, max_cell_size)
             hall_width, hall_height = cell_width * randint(min_cells_per_block, max_cells_per_block), randint(
@@ -40,7 +40,8 @@ def generate_prison(game_map, player, entities, min_cell_size, max_cell_size, mi
             x = connector_room.x2
             y = int((connector_room.y1 + connector_room.y2) / 2) - cell_height - int(hall_height / 2)
             double_sided = random.choice([True, False])
-            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided, cell_width, cell_height):
+            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided, cell_width,
+                                   cell_height):
                 connector_rooms.extend(
                     add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
 
@@ -51,7 +52,8 @@ def generate_prison(game_map, player, entities, min_cell_size, max_cell_size, mi
             x = connector_room.x1 - hall_width
             y = int((connector_room.y1 + connector_room.y2) / 2) - cell_height - int(hall_height / 2)
             double_sided = random.choice([True, False])
-            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided, cell_width, cell_height):
+            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided, cell_width,
+                                   cell_height):
                 connector_rooms.extend(
                     add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
 
@@ -85,7 +87,7 @@ def add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cel
 
     if hall_width > hall_height:
         # Add connector rooms to the left & right
-        room_size = hall_height + (cell_height * 2) + 1
+        room_size = hall_height + (cell_height * 2) + 3
         right_room = Rect(x + hall_width, y, room_size, room_size)
         if create_room(game_map, right_room, no_overlap=True):
             connector_rooms.append(right_room)
@@ -94,7 +96,7 @@ def add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cel
             connector_rooms.append(left_room)
     else:
         # Add connector rooms above/below
-        room_size = hall_width + (cell_width * 2) + 1
+        room_size = hall_width + (cell_width * 2) + 3
         top_room = Rect(x, y - room_size, room_size, room_size)
         if create_room(game_map, top_room, no_overlap=True):
             connector_rooms.append(top_room)
@@ -154,7 +156,7 @@ def generate_cell_block(game_map, entities, x_start, y_start, hall_width, hall_h
     y = y_start
 
     # Check if cell block is within map and there are no other rooms in the way
-    if width < game_map.width and x > 0 and height < game_map.height and y > 0:
+    if width < game_map.width - 1 and x > 0 and height < game_map.height - 1 and y > 0:
         # TODO: Map Gen: Stop cell blocks from overlapping rooms (something to fix in game_map.rect_is_blocked() maybe?)
         if game_map.rect_is_blocked(Rect(x, y, width - x, height - y)):
             for i in range(cell_count):

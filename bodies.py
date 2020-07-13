@@ -75,9 +75,16 @@ class Body:
         if appendage:
             results.extend(appendage.take_damage(amount))
 
+        results.extend(self.process_pain())
+        return results
+
+    def process_pain(self):
+        results = []
+
         pain = self.get_pain()
         if pain >= self.pain_tolerance:
             results.append({'dead': self.owner})
+
         return results
 
     def get_pain(self) -> int:

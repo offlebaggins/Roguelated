@@ -14,15 +14,17 @@ def kill_player(player):
 
 
 def kill_entity(entity):
-    death_message = Message("The {0} dies!".format(entity.name), tcod.dark_red)
+    death_message = None
+    if entity.ai:
+        death_message = Message("The {0} dies!".format(entity.name), tcod.dark_red)
 
-    entity.char = '%'
-    entity.color = tcod.dark_red
-    entity.blocks = False
-    entity.ai = None
-    entity.fighter = None
-    entity.name = entity.name + " corpse"
-    entity.render_order = RenderOrder.CORPSE
-    entity.item = Item()
+        entity.char = '%'
+        entity.color = tcod.dark_red
+        entity.blocks = False
+        entity.ai = None
+        entity.fighter = None
+        entity.name = entity.name + " corpse"
+        entity.render_order = RenderOrder.CORPSE
+        entity.item = Item()
 
     return death_message

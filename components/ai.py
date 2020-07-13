@@ -1,6 +1,11 @@
 import tcod
 
 
+class Player:
+    def __init__(self):
+        pass
+
+
 class BasicMonster:
 
     def __init__(self, fov_radius, max_stamina=2, move_cost=2):

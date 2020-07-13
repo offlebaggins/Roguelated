@@ -14,7 +14,7 @@ from loader_functions.data_loaders import save_game, load_game
 from menus import main_menu, message_box
 from game_map import GameMap
 from animation import Animator
-
+from components.ai import Player
 
 def main():
     constants = get_constants()
@@ -115,7 +115,7 @@ def play_game(con, player, entities, animator: Animator, turn_count: int, game_m
             path_map = generate_path_map(game_map, entities=None, player=player)
 
             for entity in entities:
-                if entity.ai:
+                if entity.ai and entity.ai != Player:
                     recompute_walkable(fov_map, game_map, entities, entity)
                     entity_turn_results = entity.ai.take_turn(player, fov_map, game_map, entities, path_map)
 

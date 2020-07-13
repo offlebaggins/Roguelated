@@ -2,6 +2,7 @@ import tcod
 
 from components.fighter import Fighter
 from components.inventory import Inventory
+from components.ai import Player
 from entity import Entity
 from render_functions import RenderOrder
 from game_map import GameMap
@@ -84,7 +85,7 @@ def get_game_variables(constants):
     inventory_component = Inventory(26)
     body_component = get_human_body()
     player = Entity(int(constants['screen_width'] / 2), int(constants['screen_height'] / 2), '@', tcod.white, "Player",
-                    blocks=True, render_order=RenderOrder.ACTOR, ai=None,
+                    blocks=True, render_order=RenderOrder.ACTOR, ai=Player,
                     inventory=inventory_component, body=body_component)
 
     entities = [player]

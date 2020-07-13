@@ -142,8 +142,10 @@ def cast_explosion(*args, **kwargs):
     for entity in entities:
         if entity.body and entity.distance(target_x, target_y) < radius:
             results.append({'message': Message(
-                'The {0} is caught in the explosion and takes {1} damage.'.format(entity.name, damage),
+                'The {0} is caught in the explosion!'.format(entity.name),
                 tcod.lighter_orange)})
-            results.extend(entity.body.take_damage(damage))
+            for appendage in entity.body.appendages:
+                results.extend(appendage.take_damage(damage))
+            # results.extend(entity.body.take_damage(damage))
 
     return results

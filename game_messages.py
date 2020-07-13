@@ -17,11 +17,12 @@ class MessageLog:
         self.height = height
 
     def add_message(self, message):
-        new_msg_lines = textwrap.wrap(message.text, self.width)
-        new_msg_lines.reverse()
+        if message:
+            new_msg_lines = textwrap.wrap(message.text, self.width)
+            new_msg_lines.reverse()
 
-        for line in new_msg_lines:
-            if len(self.messages) == self.height:
-                del self.messages[0]
+            for line in new_msg_lines:
+                if len(self.messages) == self.height:
+                    del self.messages[0]
 
-            self.messages.append(Message(line, message.color))
+                self.messages.append(Message(line, message.color))
