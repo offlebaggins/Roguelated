@@ -89,54 +89,20 @@ def add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cel
         # Add connector rooms to the left & right
         room_size = hall_height + (cell_height * 2) + 3
         right_room = Rect(x + hall_width, y, room_size, room_size)
-        if create_room(game_map, right_room, no_overlap=True):
-            connector_rooms.append(right_room)
         left_room = Rect(x - room_size, y, room_size, room_size)
-        if create_room(game_map, left_room, no_overlap=True):
-            connector_rooms.append(left_room)
+        rooms_to_add = [left_room, right_room]
     else:
         # Add connector rooms above/below
         room_size = hall_width + (cell_width * 2) + 3
         top_room = Rect(x, y - room_size, room_size, room_size)
-        if create_room(game_map, top_room, no_overlap=True):
-            connector_rooms.append(top_room)
         bottom_room = Rect(x, y + hall_height, room_size, room_size)
-        if create_room(game_map, bottom_room, no_overlap=True):
-            connector_rooms.append(bottom_room)
+        rooms_to_add = [top_room, bottom_room]
+
+    for room in rooms_to_add:
+        if create_room(game_map, room, no_overlap=True):
+            connector_rooms.append(room)
 
     return connector_rooms
-
-
-def generate_level(game_map, player, entities, max_cell_blocks, map_width, map_height):
-    cell_blocks = []
-
-    for i in range(max_cell_blocks):
-        # Get position, width, & height
-        cell_width, cell_height = randint(3, 5), randint(3, 5)
-
-        if randint(0, 1) == 1:
-            hall_width = randint(5, 30)
-            hall_height = randint(1, 5)
-            w = hall_width
-            h = hall_height + (cell_height * 2) + 2
-        else:
-            hall_width = randint(1, 5)
-            hall_height = randint(5, 30)
-            w = hall_width + (cell_width * 2) + 2
-            h = hall_height
-
-        x, y = randint(0, map_width - w), randint(0, map_height - h)
-
-        for cell_block in cell_blocks:
-            if Rect(x, y, w, h).intersect(cell_block):
-                max_cell_blocks += 1
-                break
-        else:
-            player.x = x + 1
-            player.y = y + 1
-            generate_cell_block(game_map, entities, x, y, hall_width, hall_height,
-                                cell_width=cell_width, cell_height=cell_height, double_sided=True)
-            cell_blocks.append(Rect(x, y, w, h))
 
 
 def generate_cell_block(game_map, entities, x_start, y_start, hall_width, hall_height, double_sided: bool = True,
@@ -163,8 +129,8 @@ def generate_cell_block(game_map, entities, x_start, y_start, hall_width, hall_h
                 if hall_width > hall_height:
                     # Create horizontal cell block segment
                     # Create top cell
-                    create_room(game_map, Rect(x, y, cell_width, cell_height))
-                    place_door(x + int(cell_width / 2), y + cell_height, entities, game_map)
+                    if create_room(game_map, Rect(x, y, cell_width, cell_height), closed_off=True):
+                        place_door(x + int(cell_width / 2), y + cell_height, entities, game_map)
 
                     # Create hall segment
                     for _x in range(x, x + cell_width + 1):
@@ -172,14 +138,15 @@ def generate_cell_block(game_map, entities, x_start, y_start, hall_width, hall_h
                             game_map.tiles[_x][_y].hollow()
                     # Create bottom room
                     if double_sided:
-                        create_room(game_map, Rect(x, y + 1 + cell_height + hall_height, cell_width, cell_height))
-                        place_door(x + int(cell_width / 2), y + cell_height + hall_height + 1, entities, game_map)
+                        if create_room(game_map, Rect(x, y + 1 + cell_height + hall_height, cell_width, cell_height),
+                                       closed_off=True):
+                            place_door(x + int(cell_width / 2), y + cell_height + hall_height + 1, entities, game_map)
 
                     x += cell_width
                 else:
                     # Create vertical cell block segment
-                    create_room(game_map, Rect(x, y, cell_width, cell_height))
-                    place_door(x + cell_width, y + int(cell_height / 2), entities, game_map)
+                    if create_room(game_map, Rect(x, y, cell_width, cell_height), closed_off=True):
+                        place_door(x + cell_width, y + int(cell_height / 2), entities, game_map)
 
                     # Create hall segment
                     for _x in range(x + cell_width + 1, x + cell_width + 1 + hall_width):
@@ -188,8 +155,9 @@ def generate_cell_block(game_map, entities, x_start, y_start, hall_width, hall_h
 
                     # Create right room
                     if double_sided:
-                        create_room(game_map, Rect(x + cell_width + 1 + hall_width, y, cell_width, cell_height))
-                        place_door(x + cell_width + hall_width + 1, y + int(cell_height / 2), entities, game_map)
+                        if create_room(game_map, Rect(x + cell_width + 1 + hall_width, y, cell_width, cell_height),
+                                       closed_off=True):
+                            place_door(x + cell_width + hall_width + 1, y + int(cell_height / 2), entities, game_map)
 
                     y += cell_height
             return True
@@ -250,12 +218,16 @@ def place_door(x, y, entities, game_map):
     entities.append(door_entity)
 
 
-def create_room(game_map, room: Rect, no_overlap=False):
+def create_room(game_map, room: Rect, no_overlap=False, closed_off=False):
     if room.x1 < 0 or room.x2 > game_map.width or room.y1 < 0 or room.y2 > game_map.height:
         return False
 
     if no_overlap:
         if not game_map.rect_is_blocked(room):
+            return False
+
+    if closed_off:  # This works I guess
+        if not game_map.rect_is_blocked(Rect(room.x1, room.y1, room.x2 - room.x1 + 1, room.y2 - room.y1 + 1)):
             return False
 
     for x in range(room.x1 + 1, room.x2):

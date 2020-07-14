@@ -41,8 +41,8 @@ class GameMap:
         return False
 
     def rect_is_blocked(self, rect) -> bool:
-        for x in range(rect.x1 + 1, rect.x2):
-            for y in range(rect.y1 + 1, rect.y2):
+        for x in range(rect.x1, rect.x2):
+            for y in range(rect.y1, rect.y2):
                 if self.tiles[x][y]:
                     if not self.tiles[x][y].blocked:
                         return False
