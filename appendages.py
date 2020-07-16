@@ -6,7 +6,7 @@ from components.grabber import Grabber
 
 
 class Appendage:
-    def __init__(self, name, hp=5, pain_severity = 25, fighter: Fighter = None, grabber: Grabber = None):
+    def __init__(self, name, hp=5, pain_severity=25, fighter: Fighter = None, grabber: Grabber = None):
         self.name = name
         self.max_hp = hp
         self.hp = hp
@@ -36,7 +36,8 @@ class Appendage:
         if self.hp <= 0:
             self.hp = 0
             results.append({'message': Message(
-                'The {0}\'s {1} is mangled to a bloody pulp!'.format(self.owner.owner.name, self.name), tcod.darker_crimson)})
+                'The {0}\'s {1} is mangled to a bloody pulp!'.format(self.owner.owner.name, self.name),
+                tcod.darker_crimson)})
             self.fighter = None
             if self.grabber:
                 results.extend(self.grabber.drop())
@@ -56,4 +57,3 @@ class Appendage:
 
     def get_pain(self):
         return self.pain_severity * (1 - (self.hp / self.max_hp))
-

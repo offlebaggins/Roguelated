@@ -47,3 +47,18 @@ class GameMap:
                     if not self.tiles[x][y].blocked:
                         return False
         return True
+
+    def get_adjacent_tiles(self, x, y, diagonal=True):
+        tiles = []
+        if self.tiles[x - 1][y]: tiles.extend([x - 1, y])
+        if self.tiles[x + 1][y]: tiles.extend([x + 1, y])
+        if self.tiles[x][y - 1]: tiles.extend([x, y - 1])
+        if self.tiles[x][y + 1]: tiles.extend([x, y + 1])
+
+        if diagonal:
+            if self.tiles[x - 1][y - 1]: tiles.extend([x - 1, y - 1])
+            if self.tiles[x - 1][y + 1]: tiles.extend([x - 1, y + 1])
+            if self.tiles[x + 1][y - 1]: tiles.extend([x - 1, y - 1])
+            if self.tiles[x + 1][y + 1]: tiles.extend([x - 1, y + 1])
+
+        return tiles

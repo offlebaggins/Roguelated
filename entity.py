@@ -8,7 +8,7 @@ from components.item import Item
 from components.structure import Structure
 from typing import List
 from path_functions import add_entities_to_path_map
-from bodies import Body
+from body import Body
 
 
 class Entity:

@@ -28,6 +28,10 @@ def main():
 
     tcod.console_set_custom_font("Codepage-437.png", tcod.FONT_LAYOUT_CP437)
 
+    tileset = tcod.tileset.load_tilesheet(
+        "Codepage-437.png", 16, 16, tcod.tileset.CHARMAP_CP437
+    )
+
     panel = tcod.console.Console(constants['screen_width'], constants['panel_height'])
 
     show_main_menu = True

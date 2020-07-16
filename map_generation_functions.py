@@ -27,6 +27,7 @@ def generate_prison(game_map, player, entities, min_cell_size, max_cell_size, mi
     start_room = Rect(x, y, room_size, room_size)
     create_room(game_map, start_room)
     connector_rooms = [start_room]
+    doors = []
 
     for connector_room in connector_rooms:
         # Create new cell block for each side of connector room
@@ -40,8 +41,11 @@ def generate_prison(game_map, player, entities, min_cell_size, max_cell_size, mi
             x = connector_room.x2
             y = int((connector_room.y1 + connector_room.y2) / 2) - cell_height - int(hall_height / 2)
             double_sided = random.choice([True, False])
-            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided, cell_width,
-                                   cell_height):
+            right_doors = generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided,
+                                              cell_width,
+                                              cell_height)
+            if right_doors:
+                doors.extend(right_doors)
                 connector_rooms.extend(
                     add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
 
@@ -52,8 +56,11 @@ def generate_prison(game_map, player, entities, min_cell_size, max_cell_size, mi
             x = connector_room.x1 - hall_width
             y = int((connector_room.y1 + connector_room.y2) / 2) - cell_height - int(hall_height / 2)
             double_sided = random.choice([True, False])
-            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided, cell_width,
-                                   cell_height):
+            left_doors = generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided,
+                                             cell_width,
+                                             cell_height)
+            if left_doors:
+                doors.extend(left_doors)
                 connector_rooms.extend(
                     add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
 
@@ -64,8 +71,10 @@ def generate_prison(game_map, player, entities, min_cell_size, max_cell_size, mi
             x = int((connector_room.x1 + connector_room.x2) / 2) - cell_width - int(hall_width / 2)
             y = connector_room.y1 - hall_height
             double_sided = random.choice([True, False])
-            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided, cell_width,
-                                   cell_height):
+            top_doors = generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided, cell_width,
+                                            cell_height)
+            if top_doors:
+                doors.extend(top_doors)
                 connector_rooms.extend(
                     add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
 
@@ -76,10 +85,17 @@ def generate_prison(game_map, player, entities, min_cell_size, max_cell_size, mi
             x = int((connector_room.x1 + connector_room.x2) / 2) - cell_width - int(hall_width / 2)
             y = connector_room.y2
             double_sided = random.choice([True, False])
-            if generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided, cell_width,
-                                   cell_height):
+            bottom_doors = generate_cell_block(game_map, entities, x, y, hall_width, hall_height, double_sided, cell_width,
+                                   cell_height)
+            if bottom_doors:
+                doors.extend(bottom_doors)
                 connector_rooms.extend(
                     add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height))
+
+        #TODO: Floodfill outwards from doors to generate list of rooms, should probably make a room class or something
+        # room = flood_fill(game_map, doors[0].x, doors[0].y)
+        # for tile in room:
+        #     place_door(tile.x, tile.y, entities, game_map)
 
 
 def add_connector_rooms(game_map, x, y, hall_width, hall_height, cell_width, cell_height):
@@ -120,6 +136,7 @@ def generate_cell_block(game_map, entities, x_start, y_start, hall_width, hall_h
 
     x = x_start
     y = y_start
+    doors = []
 
     # Check if cell block is within map and there are no other rooms in the way
     if width < game_map.width - 1 and x > 0 and height < game_map.height - 1 and y > 0:
@@ -130,7 +147,7 @@ def generate_cell_block(game_map, entities, x_start, y_start, hall_width, hall_h
                     # Create horizontal cell block segment
                     # Create top cell
                     if create_room(game_map, Rect(x, y, cell_width, cell_height), closed_off=True):
-                        place_door(x + int(cell_width / 2), y + cell_height, entities, game_map)
+                        doors.append(place_door(x + int(cell_width / 2), y + cell_height, entities, game_map))
 
                     # Create hall segment
                     for _x in range(x, x + cell_width + 1):
@@ -140,13 +157,15 @@ def generate_cell_block(game_map, entities, x_start, y_start, hall_width, hall_h
                     if double_sided:
                         if create_room(game_map, Rect(x, y + 1 + cell_height + hall_height, cell_width, cell_height),
                                        closed_off=True):
-                            place_door(x + int(cell_width / 2), y + cell_height + hall_height + 1, entities, game_map)
+                            doors.append(
+                                place_door(x + int(cell_width / 2), y + cell_height + hall_height + 1, entities,
+                                           game_map))
 
                     x += cell_width
                 else:
                     # Create vertical cell block segment
                     if create_room(game_map, Rect(x, y, cell_width, cell_height), closed_off=True):
-                        place_door(x + cell_width, y + int(cell_height / 2), entities, game_map)
+                        doors.append(place_door(x + cell_width, y + int(cell_height / 2), entities, game_map))
 
                     # Create hall segment
                     for _x in range(x + cell_width + 1, x + cell_width + 1 + hall_width):
@@ -157,10 +176,11 @@ def generate_cell_block(game_map, entities, x_start, y_start, hall_width, hall_h
                     if double_sided:
                         if create_room(game_map, Rect(x + cell_width + 1 + hall_width, y, cell_width, cell_height),
                                        closed_off=True):
-                            place_door(x + cell_width + hall_width + 1, y + int(cell_height / 2), entities, game_map)
+                            doors.append(place_door(x + cell_width + hall_width + 1, y + int(cell_height / 2), entities,
+                                                    game_map))
 
                     y += cell_height
-            return True
+            return doors
 
     return False
 
@@ -216,6 +236,8 @@ def place_door(x, y, entities, game_map):
     door_entity = Entity(x, y, '+', tcod.darker_orange, 'Door',
                          render_order=RenderOrder.STAIRS, structure=door)
     entities.append(door_entity)
+
+    return door_entity
 
 
 def create_room(game_map, room: Rect, no_overlap=False, closed_off=False):
@@ -312,3 +334,18 @@ def get_distance(x1, y1, x2, y2):
     dx = x2 - x1
     dy = y2 - y1
     return math.sqrt(dx ** 2 + dy ** 2)
+
+
+def flood_fill(game_map, x, y):
+    positions_to_check = [x,y]
+    flooded_positions = []
+
+    for tile_position in positions_to_check:
+
+        print(tile_position)
+        tile = game_map.tiles[tile_position[0], tile_position[1]]
+        if not tile.blocked and tile_position not in flooded_positions:
+            positions_to_check.extend(game_map.get_adjacent_tiles(x, y))
+            flooded_positions.append(tile_position)
+
+    return flooded_positions
